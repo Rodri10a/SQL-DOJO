@@ -1,0 +1,4024 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Dojo — Entrenador de SQL</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+<style>
+:root {
+  --bg-deep: #0f1019;
+  --bg-base: #161722;
+  --bg-panel: #1c1d2e;
+  --bg-elevated: #242538;
+  --bg-hover: #2c2d44;
+  --bg-input: #1a1b2a;
+  --border: #2e2f45;
+  --border-focus: #f59e0b;
+  --text-primary: #e8e9f0;
+  --text-secondary: #9495a8;
+  --text-muted: #6b6c82;
+  --accent: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-dim: rgba(245,158,11,0.15);
+  --success: #10b981;
+  --success-dim: rgba(16,185,129,0.15);
+  --error: #ef4444;
+  --error-dim: rgba(239,68,68,0.15);
+  --info: #3b82f6;
+  --info-dim: rgba(59,130,246,0.15);
+  --warning: #f97316;
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.12);
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --font-code: 'JetBrains Mono', monospace;
+  --font-ui: 'Outfit', sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  overflow: hidden;
+}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ═══ LAYOUT ═══ */
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 52px;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.topbar-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 800; font-size: 18px; letter-spacing: -0.5px;
+}
+
+.topbar-logo .icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), #f97316);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; color: #000;
+}
+
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+.topbar-progress {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-secondary);
+}
+
+.progress-bar-mini {
+  width: 120px; height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 3px; overflow: hidden;
+}
+
+.progress-bar-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), #34d399);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.main-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ═══ LEFT SIDEBAR ═══ */
+.sidebar {
+  width: 280px;
+  background: var(--bg-base);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-section {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.dataset-selector {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+
+.dataset-btn {
+  padding: 6px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.dataset-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.dataset-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.exercise-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.exercise-group-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  padding: 12px 10px 6px;
+}
+
+.exercise-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.exercise-item:hover { background: var(--bg-hover); }
+.exercise-item.active { background: var(--accent-dim); }
+
+.exercise-item .status {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.exercise-item.completed .status {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.exercise-item .ex-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-item .ex-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exercise-item .ex-tags {
+  display: flex; gap: 4px; margin-top: 3px;
+}
+
+.ex-tag {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ex-tag.beginner { background: var(--success-dim); color: var(--success); }
+.ex-tag.intermediate { background: var(--info-dim); color: var(--info); }
+.ex-tag.advanced { background: var(--purple-dim); color: var(--purple); }
+
+/* ═══ CENTER AREA ═══ */
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.editor-toolbar-left { display: flex; gap: 6px; }
+.editor-toolbar-right { display: flex; gap: 6px; align-items: center; }
+
+.toolbar-tab {
+  padding: 5px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-code);
+  font-weight: 500;
+  cursor: default;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.toolbar-tab .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.btn {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex; align-items: center; gap: 6px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-success {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+.btn-success:hover { background: #0fd991; }
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+.btn-ghost:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+.btn-danger {
+  background: var(--error-dim);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.editor-wrapper {
+  flex: 1;
+  position: relative;
+  background: var(--bg-input);
+}
+
+.line-numbers {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 44px;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  padding: 14px 0;
+  font-family: var(--font-code);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: right;
+  line-height: 1.6;
+  user-select: none;
+  overflow: hidden;
+}
+
+.line-numbers span {
+  display: block;
+  padding-right: 12px;
+}
+
+#sql-editor {
+  width: 100%;
+  height: 100%;
+  padding: 14px 16px 14px 56px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+  tab-size: 2;
+}
+
+#sql-editor::placeholder { color: var(--text-muted); }
+
+/* ═══ RESULTS PANEL ═══ */
+.results-panel {
+  height: 240px;
+  background: var(--bg-base);
+  border-top: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.results-tabs {
+  display: flex;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.results-tab {
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: var(--transition);
+}
+
+.results-tab:hover { color: var(--text-secondary); }
+.results-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.results-content {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+.result-table-wrapper {
+  overflow: auto;
+  height: 100%;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-code);
+  font-size: 12px;
+}
+
+.result-table th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-elevated);
+  color: var(--accent);
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.result-table td {
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.result-table tr:hover td { background: var(--bg-hover); }
+
+.result-table td.null-val { color: var(--text-muted); font-style: italic; }
+
+.console-output {
+  padding: 12px 16px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.8;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.console-line { margin-bottom: 2px; }
+.console-line.error { color: var(--error); }
+.console-line.success { color: var(--success); }
+.console-line.info { color: var(--info); }
+.console-line.warn { color: var(--warning); }
+
+.result-count {
+  padding: 6px 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+  font-family: var(--font-code);
+}
+
+/* ═══ VALIDATION FEEDBACK ═══ */
+.validation-result {
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.validation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.validation-badge.correct {
+  background: var(--success-dim);
+  color: var(--success);
+}
+
+.validation-badge.incorrect {
+  background: var(--error-dim);
+  color: var(--error);
+}
+
+.validation-detail {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.validation-detail strong { color: var(--text-primary); }
+
+.expected-table {
+  margin-top: 10px;
+  font-size: 11px;
+}
+
+.expected-table th {
+  background: var(--bg-panel);
+  color: var(--accent);
+}
+
+/* ═══ RIGHT SIDEBAR ═══ */
+.right-sidebar {
+  width: 360px;
+  background: var(--bg-base);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.right-tabs {
+  display: flex;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.right-tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: var(--transition);
+}
+
+.right-tab:hover { color: var(--text-secondary); }
+.right-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.right-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+}
+
+.exercise-header {
+  margin-bottom: 18px;
+}
+
+.exercise-number {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.exercise-title-main {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.exercise-concept-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--purple-dim);
+  color: var(--purple);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.exercise-statement {
+  background: var(--bg-elevated);
+  border-left: 3px solid var(--accent);
+  padding: 14px 16px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  margin-bottom: 18px;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pseudocode-block {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 18px;
+  white-space: pre-wrap;
+}
+
+.pseudocode-block .keyword { color: var(--accent); font-weight: 600; }
+.pseudocode-block .comment { color: var(--text-muted); font-style: italic; }
+
+.concept-explanation {
+  background: var(--info-dim);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 18px;
+}
+
+.concept-explanation strong { color: var(--info); }
+
+.hint-btn {
+  width: 100%;
+  padding: 8px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hint-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.hint-btn.revealed { background: var(--accent-dim); border-color: var(--accent); }
+
+.hint-content {
+  display: none;
+  padding: 10px 14px;
+  background: var(--accent-dim);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin-top: -7px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(245,158,11,0.2);
+  border-top: none;
+}
+
+.hint-content.visible { display: block; }
+
+.solution-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.solution-warning {
+  padding: 10px 14px;
+  background: var(--error-dim);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--error);
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.solution-code {
+  display: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--success);
+  white-space: pre-wrap;
+}
+
+.solution-code.visible { display: block; }
+
+/* ═══ CHEATSHEET ═══ */
+.cheatsheet-item {
+  margin-bottom: 16px;
+}
+
+.cheatsheet-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.cheatsheet-syntax {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-family: var(--font-code);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+.cheatsheet-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* ═══ SCHEMA TAB ═══ */
+.schema-table-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.schema-table-name {
+  padding: 8px 14px;
+  background: var(--bg-panel);
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.schema-columns {
+  padding: 6px 0;
+}
+
+.schema-col {
+  padding: 4px 14px;
+  font-family: var(--font-code);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schema-col .col-name { color: var(--text-primary); font-weight: 500; }
+.schema-col .col-type { color: var(--text-muted); }
+.schema-col .col-key {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+.col-key.pk { background: var(--accent-dim); color: var(--accent); }
+.col-key.fk { background: var(--info-dim); color: var(--info); }
+
+/* ═══ MODAL ═══ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.visible { display: flex; }
+
+.modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: var(--shadow);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.modal textarea {
+  width: 100%;
+  height: 200px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  color: var(--text-primary);
+  font-family: var(--font-code);
+  font-size: 12px;
+  resize: vertical;
+  outline: none;
+}
+
+.modal textarea:focus { border-color: var(--accent); }
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+/* ═══ WELCOME SCREEN ═══ */
+.welcome-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px;
+}
+
+.welcome-icon {
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg, var(--accent), #f97316);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 30px rgba(245,158,11,0.3);
+}
+
+.welcome-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.welcome-sub {
+  color: var(--text-secondary);
+  font-size: 14px;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(245,158,11,0); }
+}
+
+.pulse { animation: pulse 2s infinite; }
+
+/* ═══ LOADING ═══ */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-deep);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  transition: opacity 0.5s ease;
+}
+
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+.loading-spinner {
+  width: 48px; height: 48px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ═══ NEXT EXERCISE BUTTON ═══ */
+.btn-next {
+  margin-top: 14px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--accent), #f97316);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #000;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.4s ease forwards, pulseNext 2s ease 1s infinite;
+}
+
+.btn-next:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(245,158,11,0.4);
+}
+
+@keyframes pulseNext {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
+}
+
+/* ═══ SUCCESS GLOW ═══ */
+.validation-badge.correct {
+  animation: successGlow 0.6s ease forwards;
+}
+
+@keyframes successGlow {
+  0% { transform: scale(0.9); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ═══ ERROR HIGHLIGHT ═══ */
+.error-detail-block {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-left: 3px solid var(--error);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 14px;
+  margin-top: 8px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.error-detail-block .err-label {
+  color: var(--error);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+
+.error-detail-block .err-hint {
+  color: var(--accent);
+  font-family: var(--font-ui);
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.error-detail-block code {
+  background: rgba(239,68,68,0.12);
+  color: var(--error);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.error-detail-block .fix-suggestion {
+  color: var(--success);
+  font-family: var(--font-ui);
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+/* ═══ CONFETTI ═══ */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3000;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: -20px;
+  animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  75% { opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; }
+}
+
+/* ═══ EXERCISE COUNTER BADGE ═══ */
+.ex-counter {
+  width: 22px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-family: var(--font-code);
+  flex-shrink: 0;
+}
+
+/* ═══ AUTO-NEXT COUNTDOWN ═══ */
+.countdown-bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--success), #34d399);
+  border-radius: 2px;
+  margin-top: 10px;
+  animation: countdownShrink 2s linear forwards;
+}
+
+@keyframes countdownShrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando SQL Dojo...</div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="icon">⚡</div>
+      <span>SQL <span style="color:var(--accent)">Dojo</span></span>
+    </div>
+    <div class="topbar-progress">
+      <span id="progress-text">0 / 70 completados</span>
+      <div class="progress-bar-mini">
+        <div class="progress-bar-mini-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="exportProgress()" title="Exportar progreso">📤 Exportar</button>
+      <button class="btn btn-ghost" onclick="showImportModal()" title="Importar progreso">📥 Importar</button>
+      <button class="btn btn-ghost" onclick="resetProgress()" title="Reiniciar progreso">🔄 Reset</button>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">📦 Dataset</div>
+        <div class="dataset-selector" id="dataset-selector"></div>
+      </div>
+      <div class="sidebar-section" style="padding-bottom:4px;">
+        <div class="sidebar-section-title">📝 Ejercicios</div>
+      </div>
+      <div class="exercise-list" id="exercise-list"></div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="center">
+      <div class="editor-area">
+        <div class="editor-toolbar">
+          <div class="editor-toolbar-left">
+            <div class="toolbar-tab"><span class="dot"></span> consulta.sql</div>
+          </div>
+          <div class="editor-toolbar-right">
+            <button class="btn btn-ghost" onclick="clearEditor()">🧹 Limpiar</button>
+            <button class="btn btn-primary" onclick="executeQuery()">▶ Ejecutar</button>
+            <button class="btn btn-success" onclick="validateQuery()">✓ Validar</button>
+          </div>
+        </div>
+        <div class="editor-wrapper">
+          <div class="line-numbers" id="line-numbers"><span>1</span></div>
+          <textarea id="sql-editor" placeholder="-- Escribe tu consulta SQL aquí..." spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="results-panel">
+        <div class="results-tabs">
+          <div class="results-tab active" onclick="switchResultTab('results')">📊 Resultados</div>
+          <div class="results-tab" onclick="switchResultTab('console')">🖥 Consola</div>
+          <div class="results-tab" onclick="switchResultTab('validation')">✓ Validación</div>
+        </div>
+        <div class="results-content" id="results-content">
+          <div id="tab-results" class="result-table-wrapper">
+            <div style="padding:30px;text-align:center;color:var(--text-muted);">
+              Ejecuta una consulta para ver resultados aquí
+            </div>
+          </div>
+          <div id="tab-console" class="console-output" style="display:none;">
+            <div class="console-line info">SQL Dojo v1.0 — Listo para practicar</div>
+          </div>
+          <div id="tab-validation" class="validation-result" style="display:none;">
+            <div style="color:var(--text-muted);">Presiona "Validar" para verificar tu respuesta</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="right-sidebar">
+      <div class="right-tabs">
+        <div class="right-tab active" onclick="switchRightTab('exercise')">Ejercicio</div>
+        <div class="right-tab" onclick="switchRightTab('schema')">Esquema</div>
+        <div class="right-tab" onclick="switchRightTab('cheatsheet')">Chuleta</div>
+      </div>
+      <div class="right-content" id="right-content">
+        <div id="rtab-exercise">
+          <div class="welcome-screen">
+            <div class="welcome-icon">⚡</div>
+            <div class="welcome-title">¡Bienvenido a SQL Dojo!</div>
+            <div class="welcome-sub">Selecciona un dataset y un ejercicio del panel izquierdo para comenzar a practicar SQL.</div>
+          </div>
+        </div>
+        <div id="rtab-schema" style="display:none;"></div>
+        <div id="rtab-cheatsheet" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal">
+    <div class="modal-title">📥 Importar Progreso</div>
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">Pega el JSON de progreso exportado previamente:</p>
+    <textarea id="import-data" placeholder='{"completed":[1,2,3],...}'></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="hideImportModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="importProgress()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  SQL DOJO — ENTRENADOR DE SQL
+// ═══════════════════════════════════════════════════════════════
+
+let db = null;
+let currentDataset = null;
+let currentExercise = null;
+let progress = { completed: [], attempts: {} };
+
+// ─── DATASETS ───
+const DATASETS = {
+  tienda: {
+    name: "Tienda",
+    icon: "🛒",
+    schema: [
+      { table: "clientes", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "nombre", type: "TEXT" },
+        { name: "email", type: "TEXT" },
+        { name: "ciudad", type: "TEXT" },
+        { name: "fecha_registro", type: "DATE" }
+      ]},
+      { table: "productos", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "nombre", type: "TEXT" },
+        { name: "categoria", type: "TEXT" },
+        { name: "precio", type: "REAL" },
+        { name: "stock", type: "INTEGER" }
+      ]},
+      { table: "pedidos", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "cliente_id", type: "INTEGER", key: "FK" },
+        { name: "fecha", type: "DATE" },
+        { name: "total", type: "REAL" }
+      ]},
+      { table: "detalle_pedido", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "pedido_id", type: "INTEGER", key: "FK" },
+        { name: "producto_id", type: "INTEGER", key: "FK" },
+        { name: "cantidad", type: "INTEGER" },
+        { name: "precio_unitario", type: "REAL" }
+      ]}
+    ],
+    sql: `
+CREATE TABLE clientes (
+  id INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  email TEXT,
+  ciudad TEXT,
+  fecha_registro DATE
+);
+
+CREATE TABLE productos (
+  id INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  categoria TEXT,
+  precio REAL,
+  stock INTEGER
+);
+
+CREATE TABLE pedidos (
+  id INTEGER PRIMARY KEY,
+  cliente_id INTEGER,
+  fecha DATE,
+  total REAL,
+  FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+);
+
+CREATE TABLE detalle_pedido (
+  id INTEGER PRIMARY KEY,
+  pedido_id INTEGER,
+  producto_id INTEGER,
+  cantidad INTEGER,
+  precio_unitario REAL,
+  FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
+  FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
+
+INSERT INTO clientes VALUES
+(1,'María López','maria@email.com','Asunción','2023-01-15'),
+(2,'Carlos Benítez','carlos@email.com','Ciudad del Este','2023-02-20'),
+(3,'Ana Fernández','ana@email.com','Asunción','2023-03-10'),
+(4,'José Ramírez','jose@email.com','Encarnación','2023-04-05'),
+(5,'Laura González','laura@email.com','Luque','2023-05-12'),
+(6,'Miguel Torres','miguel@email.com','San Lorenzo','2023-06-18'),
+(7,'Patricia Vera','patricia@email.com','Asunción','2023-07-22'),
+(8,'Roberto Díaz','roberto@email.com','Lambaré','2023-08-30'),
+(9,'Sofía Martínez','sofia@email.com','Fernando de la Mora','2023-09-14'),
+(10,'Diego Acosta','diego@email.com','Ciudad del Este','2023-10-01'),
+(11,'Marta Giménez','marta@email.com','Asunción','2023-11-05'),
+(12,'Fernando Ruiz','fernando@email.com','Encarnación','2023-12-10');
+
+INSERT INTO productos VALUES
+(1,'Laptop HP 15','Electrónica',4500000,15),
+(2,'Mouse Logitech','Electrónica',120000,50),
+(3,'Teclado Mecánico','Electrónica',350000,30),
+(4,'Monitor Samsung 24"','Electrónica',2200000,10),
+(5,'Camiseta Algodón','Ropa',85000,100),
+(6,'Jean Clásico','Ropa',180000,60),
+(7,'Zapatillas Running','Ropa',420000,25),
+(8,'Mochila Escolar','Accesorios',95000,40),
+(9,'Auriculares BT','Electrónica',250000,35),
+(10,'Cable USB-C','Electrónica',35000,200),
+(11,'Remera Deportiva','Ropa',65000,80),
+(12,'Reloj Digital','Accesorios',190000,20),
+(13,'Silla Gamer','Muebles',1800000,8),
+(14,'Escritorio 120cm','Muebles',950000,12),
+(15,'Lámpara LED','Muebles',75000,45);
+
+INSERT INTO pedidos VALUES
+(1,1,'2024-01-10',4620000),
+(2,2,'2024-01-15',350000),
+(3,3,'2024-01-20',265000),
+(4,1,'2024-02-05',180000),
+(5,4,'2024-02-10',4750000),
+(6,5,'2024-02-15',85000),
+(7,6,'2024-03-01',2550000),
+(8,7,'2024-03-10',420000),
+(9,2,'2024-03-15',1800000),
+(10,8,'2024-03-20',155000),
+(11,3,'2024-04-01',350000),
+(12,9,'2024-04-10',510000),
+(13,10,'2024-04-15',4500000),
+(14,1,'2024-05-01',95000),
+(15,11,'2024-05-10',250000);
+
+INSERT INTO detalle_pedido VALUES
+(1,1,1,1,4500000),
+(2,1,2,1,120000),
+(3,2,3,1,350000),
+(4,3,5,2,85000),
+(5,3,8,1,95000),
+(6,4,6,1,180000),
+(7,5,1,1,4500000),
+(8,5,9,1,250000),
+(9,6,5,1,85000),
+(10,7,4,1,2200000),
+(11,7,3,1,350000),
+(12,8,7,1,420000),
+(13,9,13,1,1800000),
+(14,10,10,2,35000),
+(15,10,11,1,85000),
+(16,11,3,1,350000),
+(17,12,9,1,250000),
+(18,12,12,1,190000),
+(19,12,11,1,65000),
+(20,13,1,1,4500000),
+(21,14,8,1,95000),
+(22,15,9,1,250000);
+`
+  },
+
+  rrhh: {
+    name: "RRHH",
+    icon: "👥",
+    schema: [
+      { table: "departamentos", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "nombre", type: "TEXT" },
+        { name: "ubicacion", type: "TEXT" }
+      ]},
+      { table: "empleados", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "nombre", type: "TEXT" },
+        { name: "apellido", type: "TEXT" },
+        { name: "email", type: "TEXT" },
+        { name: "departamento_id", type: "INTEGER", key: "FK" },
+        { name: "salario", type: "REAL" },
+        { name: "fecha_contratacion", type: "DATE" },
+        { name: "cargo", type: "TEXT" }
+      ]}
+    ],
+    sql: `
+CREATE TABLE departamentos (
+  id INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  ubicacion TEXT
+);
+
+CREATE TABLE empleados (
+  id INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  apellido TEXT NOT NULL,
+  email TEXT,
+  departamento_id INTEGER,
+  salario REAL,
+  fecha_contratacion DATE,
+  cargo TEXT,
+  FOREIGN KEY (departamento_id) REFERENCES departamentos(id)
+);
+
+INSERT INTO departamentos VALUES
+(1,'Tecnología','Piso 3'),
+(2,'Recursos Humanos','Piso 1'),
+(3,'Ventas','Piso 2'),
+(4,'Marketing','Piso 2'),
+(5,'Finanzas','Piso 4'),
+(6,'Operaciones','Planta Baja');
+
+INSERT INTO empleados VALUES
+(1,'Ana','García','ana.garcia@empresa.com',1,5500000,'2020-03-15','Desarrolladora Senior'),
+(2,'Carlos','Martínez','carlos.m@empresa.com',1,4200000,'2021-06-01','Desarrollador Junior'),
+(3,'Laura','López','laura.l@empresa.com',2,3800000,'2019-01-10','Analista RRHH'),
+(4,'Miguel','Torres','miguel.t@empresa.com',3,4000000,'2020-08-20','Ejecutivo de Ventas'),
+(5,'Patricia','Fernández','patricia.f@empresa.com',1,6200000,'2018-05-12','Líder Técnico'),
+(6,'Roberto','Díaz','roberto.d@empresa.com',4,3500000,'2022-02-28','Diseñador'),
+(7,'Sofía','Ramírez','sofia.r@empresa.com',3,3800000,'2021-11-15','Ejecutiva de Ventas'),
+(8,'Diego','Acosta','diego.a@empresa.com',5,5000000,'2019-07-01','Contador'),
+(9,'Valentina','Benítez','valentina.b@empresa.com',1,4800000,'2020-09-10','Desarrolladora'),
+(10,'Fernando','Ruiz','fernando.r@empresa.com',2,4500000,'2018-03-22','Jefe de RRHH'),
+(11,'Camila','Vera','camila.v@empresa.com',3,4200000,'2022-01-05','Ejecutiva de Ventas'),
+(12,'Matías','González','matias.g@empresa.com',6,3200000,'2023-04-15','Operador'),
+(13,'Lucía','Morales','lucia.m@empresa.com',4,4100000,'2021-08-01','Community Manager'),
+(14,'Andrés','Silva','andres.s@empresa.com',5,5800000,'2017-11-10','Jefe de Finanzas'),
+(15,'Isabela','Castro','isabela.c@empresa.com',6,3000000,'2023-06-20','Asistente Operaciones'),
+(16,'Joaquín','Pérez','joaquin.p@empresa.com',1,3800000,'2023-01-10','Desarrollador Junior'),
+(17,'Daniela','Ortiz','daniela.o@empresa.com',3,3600000,'2022-09-01','Asistente Ventas'),
+(18,'Santiago','Rojas','santiago.r@empresa.com',5,4300000,'2020-12-01','Analista Financiero');
+`
+  },
+
+  biblioteca: {
+    name: "Biblioteca",
+    icon: "📚",
+    schema: [
+      { table: "autores", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "nombre", type: "TEXT" },
+        { name: "nacionalidad", type: "TEXT" }
+      ]},
+      { table: "libros", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "titulo", type: "TEXT" },
+        { name: "autor_id", type: "INTEGER", key: "FK" },
+        { name: "genero", type: "TEXT" },
+        { name: "anio_publicacion", type: "INTEGER" },
+        { name: "disponible", type: "INTEGER" }
+      ]},
+      { table: "usuarios", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "nombre", type: "TEXT" },
+        { name: "email", type: "TEXT" },
+        { name: "tipo_membresia", type: "TEXT" }
+      ]},
+      { table: "prestamos", columns: [
+        { name: "id", type: "INTEGER", key: "PK" },
+        { name: "libro_id", type: "INTEGER", key: "FK" },
+        { name: "usuario_id", type: "INTEGER", key: "FK" },
+        { name: "fecha_prestamo", type: "DATE" },
+        { name: "fecha_devolucion", type: "DATE" }
+      ]}
+    ],
+    sql: `
+CREATE TABLE autores (
+  id INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  nacionalidad TEXT
+);
+
+CREATE TABLE libros (
+  id INTEGER PRIMARY KEY,
+  titulo TEXT NOT NULL,
+  autor_id INTEGER,
+  genero TEXT,
+  anio_publicacion INTEGER,
+  disponible INTEGER DEFAULT 1,
+  FOREIGN KEY (autor_id) REFERENCES autores(id)
+);
+
+CREATE TABLE usuarios (
+  id INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  email TEXT,
+  tipo_membresia TEXT
+);
+
+CREATE TABLE prestamos (
+  id INTEGER PRIMARY KEY,
+  libro_id INTEGER,
+  usuario_id INTEGER,
+  fecha_prestamo DATE,
+  fecha_devolucion DATE,
+  FOREIGN KEY (libro_id) REFERENCES libros(id),
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+INSERT INTO autores VALUES
+(1,'Gabriel García Márquez','Colombiana'),
+(2,'Jorge Luis Borges','Argentina'),
+(3,'Isabel Allende','Chilena'),
+(4,'Mario Vargas Llosa','Peruana'),
+(5,'Julio Cortázar','Argentina'),
+(6,'Augusto Roa Bastos','Paraguaya'),
+(7,'Pablo Neruda','Chilena'),
+(8,'Horacio Quiroga','Uruguaya');
+
+INSERT INTO libros VALUES
+(1,'Cien años de soledad',1,'Novela',1967,1),
+(2,'El amor en los tiempos del cólera',1,'Novela',1985,0),
+(3,'Ficciones',2,'Cuento',1944,1),
+(4,'El Aleph',2,'Cuento',1949,1),
+(5,'La casa de los espíritus',3,'Novela',1982,0),
+(6,'Eva Luna',3,'Novela',1987,1),
+(7,'La ciudad y los perros',4,'Novela',1963,1),
+(8,'Conversación en La Catedral',4,'Novela',1969,0),
+(9,'Rayuela',5,'Novela',1963,1),
+(10,'Bestiario',5,'Cuento',1951,1),
+(11,'Yo el Supremo',6,'Novela',1974,1),
+(12,'Hijo de hombre',6,'Novela',1960,0),
+(13,'Veinte poemas de amor',7,'Poesía',1924,1),
+(14,'Canto general',7,'Poesía',1950,1),
+(15,'Cuentos de amor de locura y de muerte',8,'Cuento',1917,1);
+
+INSERT INTO usuarios VALUES
+(1,'Pedro Martínez','pedro@mail.com','Premium'),
+(2,'Lucía Gómez','lucia@mail.com','Básica'),
+(3,'Andrés Vargas','andres@mail.com','Premium'),
+(4,'Carmen Ruiz','carmen@mail.com','Básica'),
+(5,'Jorge Mendoza','jorge@mail.com','Estudiante'),
+(6,'Rosa Flores','rosa@mail.com','Premium'),
+(7,'Manuel Díaz','manuel@mail.com','Estudiante'),
+(8,'Elena Sánchez','elena@mail.com','Básica');
+
+INSERT INTO prestamos VALUES
+(1,2,1,'2024-01-10','2024-01-25'),
+(2,5,2,'2024-01-15',NULL),
+(3,8,3,'2024-02-01','2024-02-15'),
+(4,12,1,'2024-02-10',NULL),
+(5,1,4,'2024-02-20','2024-03-05'),
+(6,9,5,'2024-03-01','2024-03-15'),
+(7,3,6,'2024-03-10','2024-03-25'),
+(8,6,7,'2024-03-15',NULL),
+(9,11,2,'2024-04-01','2024-04-14'),
+(10,4,8,'2024-04-10','2024-04-25'),
+(11,2,3,'2024-04-15','2024-04-30'),
+(12,7,1,'2024-05-01',NULL),
+(13,10,5,'2024-05-10','2024-05-24'),
+(14,13,4,'2024-05-15',NULL),
+(15,15,6,'2024-06-01','2024-06-15');
+`
+  }
+};
+
+// ─── EXERCISES ───
+const EXERCISES = [
+  // ══════ PRINCIPIANTE (1-15) ══════
+  {
+    id: 1,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Ver todos los productos",
+    concept: "SELECT *",
+    statement: "Muestra todos los datos de la tabla <strong>productos</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas (*)
+<span class="keyword">2. DESDE</span> la tabla productos`,
+    explanation: "<strong>SELECT *</strong> selecciona todas las columnas de una tabla. El asterisco (*) es un comodín que significa \"todo\". <strong>FROM</strong> indica de qué tabla queremos los datos.",
+    hints: [
+      "La palabra clave para seleccionar datos es SELECT",
+      "Usa * para indicar \"todas las columnas\"",
+      "La consulta completa tiene el patrón: SELECT ... FROM ..."
+    ],
+    solution: "SELECT * FROM productos;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 2,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Columnas específicas",
+    concept: "SELECT columnas",
+    statement: "Muestra solo el <strong>nombre</strong> y el <strong>precio</strong> de cada producto.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> las columnas: nombre, precio
+<span class="keyword">2. DESDE</span> la tabla productos`,
+    explanation: "En lugar de usar *, puedes listar las columnas que necesitas separadas por comas. Esto es más eficiente y te da solo la información que necesitas.",
+    hints: [
+      "Separa los nombres de columnas con comas",
+      "SELECT nombre, precio FROM ...",
+      "La tabla se llama 'productos'"
+    ],
+    solution: "SELECT nombre, precio FROM productos;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 3,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Filtrar por precio",
+    concept: "WHERE",
+    statement: "Muestra todos los productos cuyo <strong>precio sea mayor a 200000</strong> (Gs.).",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. DONDE</span> el precio sea mayor a 200000`,
+    explanation: "<strong>WHERE</strong> filtra las filas según una condición. Los operadores de comparación son: = (igual), > (mayor), < (menor), >= (mayor o igual), <= (menor o igual), != o <> (distinto).",
+    hints: [
+      "Usa WHERE después de FROM",
+      "El operador 'mayor que' es: >",
+      "SELECT * FROM productos WHERE precio > ..."
+    ],
+    solution: "SELECT * FROM productos WHERE precio > 200000;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 4,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Filtrar por ciudad",
+    concept: "WHERE con texto",
+    statement: "Muestra los clientes que viven en <strong>'Asunción'</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla clientes
+<span class="keyword">3. DONDE</span> la ciudad sea 'Asunción'`,
+    explanation: "Cuando filtras por texto, el valor debe ir entre comillas simples: 'Asunción'. SQL diferencia entre mayúsculas y minúsculas en algunos motores (en SQLite no por defecto).",
+    hints: [
+      "Los valores de texto van entre comillas simples: 'texto'",
+      "La columna se llama 'ciudad'",
+      "WHERE ciudad = 'Asunción'"
+    ],
+    solution: "SELECT * FROM clientes WHERE ciudad = 'Asunción';",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 5,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Ordenar resultados",
+    concept: "ORDER BY",
+    statement: "Muestra todos los productos ordenados por <strong>precio de mayor a menor</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. ORDENAR POR</span> precio de forma descendente`,
+    explanation: "<strong>ORDER BY</strong> ordena los resultados. Por defecto ordena de menor a mayor (ASC). Para ordenar de mayor a menor, agrega <strong>DESC</strong> (descendente).",
+    hints: [
+      "ORDER BY va después de FROM (y WHERE si existe)",
+      "DESC significa descendente (mayor a menor)",
+      "SELECT * FROM productos ORDER BY precio DESC"
+    ],
+    solution: "SELECT * FROM productos ORDER BY precio DESC;",
+    validate: { ignoreOrder: false }
+  },
+  {
+    id: 6,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Limitar resultados",
+    concept: "LIMIT",
+    statement: "Muestra los <strong>5 productos más caros</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. ORDENAR POR</span> precio descendente
+<span class="keyword">4. LIMITAR</span> a 5 resultados`,
+    explanation: "<strong>LIMIT</strong> restringe el número de filas devueltas. Es muy útil combinado con ORDER BY para obtener los \"top N\" resultados.",
+    hints: [
+      "Primero ordena por precio DESC",
+      "LIMIT va al final de la consulta",
+      "SELECT * FROM productos ORDER BY precio DESC LIMIT 5"
+    ],
+    solution: "SELECT * FROM productos ORDER BY precio DESC LIMIT 5;",
+    validate: { ignoreOrder: false }
+  },
+  {
+    id: 7,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Valores únicos",
+    concept: "DISTINCT",
+    statement: "Muestra todas las <strong>categorías únicas</strong> (sin repetir) de productos.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> valores distintos de la columna categoría
+<span class="keyword">2. DESDE</span> la tabla productos`,
+    explanation: "<strong>DISTINCT</strong> elimina filas duplicadas del resultado. Se coloca justo después de SELECT. Es útil para ver qué valores diferentes existen en una columna.",
+    hints: [
+      "DISTINCT va entre SELECT y el nombre de columna",
+      "SELECT DISTINCT columna FROM tabla",
+      "La columna se llama 'categoria'"
+    ],
+    solution: "SELECT DISTINCT categoria FROM productos;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 8,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Rango de precios",
+    concept: "BETWEEN",
+    statement: "Muestra los productos con precio <strong>entre 100000 y 500000</strong> guaraníes (inclusive).",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. DONDE</span> el precio esté ENTRE 100000 Y 500000`,
+    explanation: "<strong>BETWEEN</strong> filtra valores dentro de un rango (incluye ambos extremos). Es equivalente a escribir: precio >= 100000 AND precio <= 500000, pero más legible.",
+    hints: [
+      "BETWEEN incluye ambos valores extremos",
+      "La sintaxis es: WHERE columna BETWEEN valor1 AND valor2",
+      "WHERE precio BETWEEN 100000 AND 500000"
+    ],
+    solution: "SELECT * FROM productos WHERE precio BETWEEN 100000 AND 500000;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 9,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Buscar por patrón",
+    concept: "LIKE",
+    statement: "Muestra los clientes cuyo <strong>nombre empiece con 'M'</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla clientes
+<span class="keyword">3. DONDE</span> el nombre sea COMO 'M%'`,
+    explanation: "<strong>LIKE</strong> busca patrones en texto. El comodín <strong>%</strong> significa \"cualquier cantidad de caracteres\". Ejemplo: 'M%' = empieza con M. '%ez' = termina en ez. '%ar%' = contiene 'ar'.",
+    hints: [
+      "% representa cualquier cantidad de caracteres",
+      "Para 'empieza con M' usa: LIKE 'M%'",
+      "WHERE nombre LIKE 'M%'"
+    ],
+    solution: "SELECT * FROM clientes WHERE nombre LIKE 'M%';",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 10,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Lista de valores",
+    concept: "IN",
+    statement: "Muestra los productos de las categorías <strong>'Electrónica' y 'Ropa'</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. DONDE</span> la categoría esté EN la lista ('Electrónica', 'Ropa')`,
+    explanation: "<strong>IN</strong> filtra filas donde una columna tenga uno de los valores listados. Es equivalente a múltiples OR: categoria = 'Electrónica' OR categoria = 'Ropa', pero más limpio.",
+    hints: [
+      "IN recibe una lista entre paréntesis",
+      "Los textos van entre comillas simples",
+      "WHERE categoria IN ('Electrónica', 'Ropa')"
+    ],
+    solution: "SELECT * FROM productos WHERE categoria IN ('Electrónica', 'Ropa');",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 11,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Contar registros",
+    concept: "COUNT",
+    statement: "¿Cuántos productos hay en total en la tienda? Muestra el resultado como <strong>total_productos</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> el CONTEO de todos los registros
+<span class="keyword">2.</span> Darle un alias: total_productos
+<span class="keyword">3. DESDE</span> la tabla productos`,
+    explanation: "<strong>COUNT(*)</strong> cuenta todas las filas. <strong>AS</strong> le da un nombre (alias) a la columna del resultado. Ejemplo: COUNT(*) AS total_productos.",
+    hints: [
+      "COUNT(*) cuenta todas las filas",
+      "AS le da un nombre al resultado: COUNT(*) AS nombre",
+      "SELECT COUNT(*) AS total_productos FROM productos"
+    ],
+    solution: "SELECT COUNT(*) AS total_productos FROM productos;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 12,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Precio promedio",
+    concept: "AVG",
+    statement: "Calcula el <strong>precio promedio</strong> de todos los productos. Muéstralo como <strong>precio_promedio</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> el PROMEDIO de la columna precio
+<span class="keyword">2.</span> Darle alias: precio_promedio
+<span class="keyword">3. DESDE</span> la tabla productos`,
+    explanation: "<strong>AVG(columna)</strong> calcula el promedio de los valores numéricos de una columna. Ignora valores NULL. Otras funciones agregadas útiles: SUM (suma), MIN (mínimo), MAX (máximo).",
+    hints: [
+      "AVG() calcula el promedio de una columna",
+      "AVG(precio) AS precio_promedio",
+      "SELECT AVG(precio) AS precio_promedio FROM productos"
+    ],
+    solution: "SELECT AVG(precio) AS precio_promedio FROM productos;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 13,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Valor total del inventario",
+    concept: "SUM y expresiones",
+    statement: "Calcula el <strong>valor total del inventario</strong> (precio × stock de cada producto, sumados). Muéstralo como <strong>valor_inventario</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> la SUMA de (precio * stock)
+<span class="keyword">2.</span> Darle alias: valor_inventario
+<span class="keyword">3. DESDE</span> la tabla productos`,
+    explanation: "Puedes hacer operaciones matemáticas dentro de funciones agregadas. <strong>SUM(precio * stock)</strong> multiplica precio por stock en cada fila, y luego suma todos esos resultados.",
+    hints: [
+      "Puedes multiplicar columnas: precio * stock",
+      "SUM() suma el resultado de cada fila",
+      "SELECT SUM(precio * stock) AS valor_inventario FROM productos"
+    ],
+    solution: "SELECT SUM(precio * stock) AS valor_inventario FROM productos;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 14,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Contar por categoría",
+    concept: "GROUP BY",
+    statement: "Muestra cuántos productos hay en <strong>cada categoría</strong>. Muestra la categoría y la cantidad como <strong>cantidad</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> la categoría y el CONTEO
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. AGRUPAR POR</span> categoría`,
+    explanation: "<strong>GROUP BY</strong> agrupa filas que tienen el mismo valor en una columna, y te permite aplicar funciones agregadas (COUNT, SUM, AVG) a cada grupo por separado.",
+    hints: [
+      "GROUP BY va después de FROM/WHERE",
+      "SELECT categoria, COUNT(*) AS cantidad FROM ...",
+      "SELECT categoria, COUNT(*) AS cantidad FROM productos GROUP BY categoria"
+    ],
+    solution: "SELECT categoria, COUNT(*) AS cantidad FROM productos GROUP BY categoria;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 15,
+    dataset: "rrhh",
+    level: "beginner",
+    title: "Empleados con buen salario",
+    concept: "WHERE + ORDER BY",
+    statement: "Muestra el <strong>nombre, apellido y salario</strong> de los empleados con salario mayor a 4000000, ordenados de <strong>mayor a menor salario</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> nombre, apellido, salario
+<span class="keyword">2. DESDE</span> la tabla empleados
+<span class="keyword">3. DONDE</span> salario > 4000000
+<span class="keyword">4. ORDENAR POR</span> salario descendente`,
+    explanation: "Puedes combinar WHERE y ORDER BY en la misma consulta. Primero filtra (WHERE), luego ordena (ORDER BY). El orden de las cláusulas importa: SELECT → FROM → WHERE → ORDER BY.",
+    hints: [
+      "WHERE va antes de ORDER BY",
+      "Selecciona solo 3 columnas: nombre, apellido, salario",
+      "SELECT nombre, apellido, salario FROM empleados WHERE salario > 4000000 ORDER BY salario DESC"
+    ],
+    solution: "SELECT nombre, apellido, salario FROM empleados WHERE salario > 4000000 ORDER BY salario DESC;",
+    validate: { ignoreOrder: false }
+  },
+
+  // ══════ INTERMEDIO (16-25) ══════
+  {
+    id: 16,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Categorías populares",
+    concept: "GROUP BY + HAVING",
+    statement: "Muestra las categorías que tengan <strong>más de 3 productos</strong>. Muestra la categoría y la cantidad.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> categoría y CONTEO
+<span class="keyword">2. DESDE</span> productos
+<span class="keyword">3. AGRUPAR POR</span> categoría
+<span class="keyword">4. TENIENDO</span> conteo > 3`,
+    explanation: "<strong>HAVING</strong> es como WHERE, pero para grupos. WHERE filtra filas antes de agrupar; HAVING filtra grupos después de agrupar. Se usa con funciones agregadas.",
+    hints: [
+      "HAVING va después de GROUP BY",
+      "HAVING COUNT(*) > 3",
+      "SELECT categoria, COUNT(*) AS cantidad FROM productos GROUP BY categoria HAVING COUNT(*) > 3"
+    ],
+    solution: "SELECT categoria, COUNT(*) AS cantidad FROM productos GROUP BY categoria HAVING COUNT(*) > 3;",
+    validate: { ignoreOrder: true, checkPattern: "HAVING" }
+  },
+  {
+    id: 17,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Pedidos con nombre de cliente",
+    concept: "INNER JOIN",
+    statement: "Muestra el <strong>nombre del cliente</strong>, la <strong>fecha del pedido</strong> y el <strong>total</strong> de cada pedido. Usa un JOIN entre clientes y pedidos.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> clientes.nombre, pedidos.fecha, pedidos.total
+<span class="keyword">2. DESDE</span> pedidos
+<span class="keyword">3. UNIR (JOIN)</span> con clientes
+<span class="keyword">4. DONDE</span> pedidos.cliente_id = clientes.id`,
+    explanation: "<strong>INNER JOIN</strong> combina filas de dos tablas basándose en una condición de igualdad (generalmente FK = PK). Solo muestra filas donde hay coincidencia en ambas tablas.",
+    hints: [
+      "JOIN une dos tablas por una columna en común",
+      "ON especifica la condición: pedidos.cliente_id = clientes.id",
+      "SELECT c.nombre, p.fecha, p.total FROM pedidos p INNER JOIN clientes c ON p.cliente_id = c.id"
+    ],
+    solution: "SELECT c.nombre, p.fecha, p.total FROM pedidos p INNER JOIN clientes c ON p.cliente_id = c.id;",
+    validate: { ignoreOrder: true, checkPattern: "JOIN" }
+  },
+  {
+    id: 18,
+    dataset: "biblioteca",
+    level: "intermediate",
+    title: "Libros con autor",
+    concept: "INNER JOIN",
+    statement: "Muestra el <strong>título del libro</strong>, el <strong>nombre del autor</strong> y el <strong>género</strong>. Ordena por título.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> libros.titulo, autores.nombre, libros.genero
+<span class="keyword">2. DESDE</span> libros
+<span class="keyword">3. UNIR</span> con autores
+<span class="keyword">4. DONDE</span> libros.autor_id = autores.id
+<span class="keyword">5. ORDENAR POR</span> título`,
+    explanation: "Cuando unes tablas, usa <strong>tabla.columna</strong> o alias para especificar de qué tabla viene cada columna, especialmente si ambas tienen columnas con el mismo nombre (como 'nombre').",
+    hints: [
+      "Usa alias: libros l, autores a",
+      "ON l.autor_id = a.id",
+      "SELECT l.titulo, a.nombre, l.genero FROM libros l JOIN autores a ON l.autor_id = a.id ORDER BY l.titulo"
+    ],
+    solution: "SELECT l.titulo, a.nombre AS autor, l.genero FROM libros l INNER JOIN autores a ON l.autor_id = a.id ORDER BY l.titulo;",
+    validate: { ignoreOrder: false, checkPattern: "JOIN" }
+  },
+  {
+    id: 19,
+    dataset: "biblioteca",
+    level: "intermediate",
+    title: "Libros prestados y a quién",
+    concept: "Múltiples JOINs",
+    statement: "Muestra el <strong>título del libro</strong>, el <strong>nombre del usuario</strong> que lo tomó prestado, y la <strong>fecha del préstamo</strong>. Solo préstamos que aún <strong>no fueron devueltos</strong> (fecha_devolucion es NULL).",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> libros.titulo, usuarios.nombre, prestamos.fecha_prestamo
+<span class="keyword">2. DESDE</span> prestamos
+<span class="keyword">3. UNIR</span> con libros (por libro_id)
+<span class="keyword">4. UNIR</span> con usuarios (por usuario_id)
+<span class="keyword">5. DONDE</span> fecha_devolucion ES NULO (NULL)`,
+    explanation: "Puedes hacer múltiples JOINs en una misma consulta. Para verificar si un valor es NULL usa <strong>IS NULL</strong> (no = NULL). NULL no es un valor, es la \"ausencia de valor\".",
+    hints: [
+      "Para verificar NULL usa IS NULL, no = NULL",
+      "Puedes encadenar JOINs: FROM t1 JOIN t2 ON ... JOIN t3 ON ...",
+      "FROM prestamos p JOIN libros l ON p.libro_id = l.id JOIN usuarios u ON p.usuario_id = u.id WHERE p.fecha_devolucion IS NULL"
+    ],
+    solution: "SELECT l.titulo, u.nombre, p.fecha_prestamo FROM prestamos p JOIN libros l ON p.libro_id = l.id JOIN usuarios u ON p.usuario_id = u.id WHERE p.fecha_devolucion IS NULL;",
+    validate: { ignoreOrder: true, checkPattern: "JOIN" }
+  },
+  {
+    id: 20,
+    dataset: "rrhh",
+    level: "intermediate",
+    title: "Empleados por departamento",
+    concept: "JOIN + GROUP BY",
+    statement: "Muestra el <strong>nombre del departamento</strong> y la <strong>cantidad de empleados</strong> en cada uno. Ordena de mayor a menor cantidad.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> departamentos.nombre y CONTEO de empleados
+<span class="keyword">2. DESDE</span> empleados
+<span class="keyword">3. UNIR</span> con departamentos
+<span class="keyword">4. AGRUPAR POR</span> nombre del departamento
+<span class="keyword">5. ORDENAR POR</span> cantidad descendente`,
+    explanation: "Combinar JOIN con GROUP BY es muy común. Primero unes las tablas para tener toda la información, luego agrupas y cuentas. El orden es: FROM → JOIN → WHERE → GROUP BY → HAVING → ORDER BY.",
+    hints: [
+      "Primero haz el JOIN, luego GROUP BY",
+      "SELECT d.nombre, COUNT(*) AS cantidad FROM empleados e JOIN departamentos d ON ...",
+      "...ON e.departamento_id = d.id GROUP BY d.nombre ORDER BY cantidad DESC"
+    ],
+    solution: "SELECT d.nombre, COUNT(*) AS cantidad FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre ORDER BY cantidad DESC;",
+    validate: { ignoreOrder: false, checkPattern: "JOIN" }
+  },
+  {
+    id: 21,
+    dataset: "rrhh",
+    level: "intermediate",
+    title: "Salario promedio por departamento",
+    concept: "JOIN + AVG + GROUP BY",
+    statement: "Muestra el <strong>nombre del departamento</strong> y el <strong>salario promedio</strong> de sus empleados (como salario_promedio). Ordena por salario promedio descendente.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> departamento.nombre y PROMEDIO de salario
+<span class="keyword">2. DESDE</span> empleados
+<span class="keyword">3. UNIR</span> con departamentos
+<span class="keyword">4. AGRUPAR POR</span> nombre del departamento
+<span class="keyword">5. ORDENAR POR</span> salario_promedio descendente`,
+    explanation: "AVG() dentro de un GROUP BY calcula el promedio para cada grupo. Combinar JOIN + AVG + GROUP BY es un patrón muy usado en reportes.",
+    hints: [
+      "AVG(e.salario) AS salario_promedio",
+      "JOIN departamentos d ON e.departamento_id = d.id",
+      "GROUP BY d.nombre ORDER BY salario_promedio DESC"
+    ],
+    solution: "SELECT d.nombre, AVG(e.salario) AS salario_promedio FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre ORDER BY salario_promedio DESC;",
+    validate: { ignoreOrder: false, checkPattern: "JOIN" }
+  },
+  {
+    id: 22,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Clientes con múltiples pedidos",
+    concept: "JOIN + GROUP BY + HAVING",
+    statement: "Muestra el <strong>nombre del cliente</strong> y la <strong>cantidad de pedidos</strong> que hizo, pero solo los clientes con <strong>más de 1 pedido</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> nombre del cliente y CONTEO de pedidos
+<span class="keyword">2. DESDE</span> pedidos
+<span class="keyword">3. UNIR</span> con clientes
+<span class="keyword">4. AGRUPAR POR</span> nombre del cliente
+<span class="keyword">5. TENIENDO</span> conteo de pedidos > 1`,
+    explanation: "Este patrón combina tres técnicas: JOIN para traer datos de otra tabla, GROUP BY para agrupar por cliente, y HAVING para filtrar solo los grupos con más de un pedido.",
+    hints: [
+      "Primero JOIN, luego GROUP BY, luego HAVING",
+      "HAVING COUNT(*) > 1 filtra grupos",
+      "SELECT c.nombre, COUNT(*) AS cantidad_pedidos FROM pedidos p JOIN clientes c ON p.cliente_id = c.id GROUP BY c.nombre HAVING COUNT(*) > 1"
+    ],
+    solution: "SELECT c.nombre, COUNT(*) AS cantidad_pedidos FROM pedidos p JOIN clientes c ON p.cliente_id = c.id GROUP BY c.nombre HAVING COUNT(*) > 1;",
+    validate: { ignoreOrder: true, checkPattern: "HAVING" }
+  },
+  {
+    id: 23,
+    dataset: "biblioteca",
+    level: "intermediate",
+    title: "Autores y cantidad de libros",
+    concept: "LEFT JOIN + COUNT",
+    statement: "Muestra el <strong>nombre de cada autor</strong> y <strong>cuántos libros tiene</strong> en la biblioteca (como total_libros). Incluye autores aunque no tengan libros. Ordena por total descendente.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> autores.nombre y CONTEO de libros
+<span class="keyword">2. DESDE</span> autores
+<span class="keyword">3. UNIR (LEFT JOIN)</span> con libros
+<span class="keyword">4. AGRUPAR POR</span> nombre del autor
+<span class="keyword">5. ORDENAR POR</span> total descendente`,
+    explanation: "<strong>LEFT JOIN</strong> mantiene TODAS las filas de la tabla izquierda, aunque no tengan coincidencia en la derecha (en ese caso, pone NULL). Es útil cuando quieres incluir registros \"sin relación\".",
+    hints: [
+      "LEFT JOIN mantiene todos los registros de la tabla izquierda",
+      "COUNT(l.id) cuenta solo libros que existen (ignora NULL)",
+      "FROM autores a LEFT JOIN libros l ON l.autor_id = a.id GROUP BY a.nombre"
+    ],
+    solution: "SELECT a.nombre, COUNT(l.id) AS total_libros FROM autores a LEFT JOIN libros l ON l.autor_id = a.id GROUP BY a.nombre ORDER BY total_libros DESC;",
+    validate: { ignoreOrder: false, checkPattern: "LEFT JOIN" }
+  },
+  {
+    id: 24,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Productos más vendidos",
+    concept: "JOIN + SUM + GROUP BY",
+    statement: "Muestra el <strong>nombre del producto</strong> y la <strong>cantidad total vendida</strong> (suma de cantidades en detalle_pedido, como total_vendido). Ordena de mayor a menor. Muestra los top 5.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> productos.nombre y SUMA de detalle.cantidad
+<span class="keyword">2. DESDE</span> detalle_pedido
+<span class="keyword">3. UNIR</span> con productos
+<span class="keyword">4. AGRUPAR POR</span> nombre del producto
+<span class="keyword">5. ORDENAR POR</span> total_vendido descendente
+<span class="keyword">6. LIMITAR</span> a 5`,
+    explanation: "SUM() dentro de GROUP BY suma los valores de cada grupo. Combinar JOIN + SUM + GROUP BY + ORDER BY + LIMIT es un patrón clásico para reportes de \"top N\".",
+    hints: [
+      "SUM(dp.cantidad) AS total_vendido",
+      "FROM detalle_pedido dp JOIN productos p ON dp.producto_id = p.id",
+      "GROUP BY p.nombre ORDER BY total_vendido DESC LIMIT 5"
+    ],
+    solution: "SELECT p.nombre, SUM(dp.cantidad) AS total_vendido FROM detalle_pedido dp JOIN productos p ON dp.producto_id = p.id GROUP BY p.nombre ORDER BY total_vendido DESC LIMIT 5;",
+    validate: { ignoreOrder: false, checkPattern: "JOIN" }
+  },
+  {
+    id: 25,
+    dataset: "rrhh",
+    level: "intermediate",
+    title: "Departamentos costosos",
+    concept: "JOIN + SUM + HAVING",
+    statement: "Muestra los departamentos donde la <strong>suma total de salarios supere los 10000000</strong>. Muestra nombre del departamento y total_salarios.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> departamento.nombre y SUMA de salarios
+<span class="keyword">2. DESDE</span> empleados
+<span class="keyword">3. UNIR</span> con departamentos
+<span class="keyword">4. AGRUPAR POR</span> nombre del departamento
+<span class="keyword">5. TENIENDO</span> suma de salarios > 10000000`,
+    explanation: "HAVING con SUM filtra grupos donde la suma cumple una condición. Recuerda: WHERE filtra filas individuales antes de agrupar, HAVING filtra grupos después de agrupar.",
+    hints: [
+      "SUM(e.salario) AS total_salarios",
+      "HAVING SUM(e.salario) > 10000000",
+      "SELECT d.nombre, SUM(e.salario) AS total_salarios FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre HAVING SUM(e.salario) > 10000000"
+    ],
+    solution: "SELECT d.nombre, SUM(e.salario) AS total_salarios FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre HAVING SUM(e.salario) > 10000000;",
+    validate: { ignoreOrder: true, checkPattern: "HAVING" }
+  },
+
+  // ══════ INTERMEDIO+ (26-30) ══════
+  {
+    id: 26,
+    dataset: "tienda",
+    level: "advanced",
+    title: "Productos más caros que el promedio",
+    concept: "Subquery en WHERE",
+    statement: "Muestra los productos cuyo <strong>precio sea mayor al precio promedio</strong> de todos los productos. Ordena por precio descendente.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas de productos
+<span class="keyword">2. DONDE</span> el precio sea mayor a:
+   <span class="keyword">2.1.</span> (una sub-consulta que calcule el promedio de precios)
+<span class="keyword">3. ORDENAR POR</span> precio descendente`,
+    explanation: "Una <strong>subquery</strong> (subconsulta) es una consulta dentro de otra. Aquí la usamos en WHERE para comparar contra un valor calculado dinámicamente. La subconsulta se ejecuta primero y su resultado se usa en la consulta principal.",
+    hints: [
+      "La subconsulta va entre paréntesis: (SELECT AVG(precio) FROM productos)",
+      "WHERE precio > (subconsulta)",
+      "SELECT * FROM productos WHERE precio > (SELECT AVG(precio) FROM productos) ORDER BY precio DESC"
+    ],
+    solution: "SELECT * FROM productos WHERE precio > (SELECT AVG(precio) FROM productos) ORDER BY precio DESC;",
+    validate: { ignoreOrder: false, checkPattern: "SELECT.*SELECT" }
+  },
+  {
+    id: 27,
+    dataset: "rrhh",
+    level: "advanced",
+    title: "Empleados mejor pagados que su departamento",
+    concept: "Subquery correlacionada",
+    statement: "Muestra <strong>nombre, apellido, salario</strong> de los empleados cuyo salario sea mayor al <strong>promedio de su propio departamento</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> nombre, apellido, salario
+<span class="keyword">2. DESDE</span> empleados (alias e1)
+<span class="keyword">3. DONDE</span> el salario sea mayor a:
+   <span class="keyword">3.1.</span> (subconsulta: promedio de salario
+         DONDE departamento_id = el departamento del empleado actual)`,
+    explanation: "Una <strong>subquery correlacionada</strong> hace referencia a la consulta externa. Se ejecuta una vez por cada fila de la consulta principal. Aquí compara el salario de cada empleado contra el promedio de su propio departamento.",
+    hints: [
+      "La subconsulta necesita filtrar por el departamento del empleado actual",
+      "WHERE e1.salario > (SELECT AVG(e2.salario) FROM empleados e2 WHERE e2.departamento_id = e1.departamento_id)",
+      "Usa alias diferentes para la tabla interna y externa (e1, e2)"
+    ],
+    solution: "SELECT e1.nombre, e1.apellido, e1.salario FROM empleados e1 WHERE e1.salario > (SELECT AVG(e2.salario) FROM empleados e2 WHERE e2.departamento_id = e1.departamento_id);",
+    validate: { ignoreOrder: true, checkPattern: "SELECT.*SELECT" }
+  },
+  {
+    id: 28,
+    dataset: "biblioteca",
+    level: "advanced",
+    title: "Usuarios que nunca pidieron prestado",
+    concept: "Subquery con NOT IN",
+    statement: "Muestra los <strong>usuarios que nunca han realizado un préstamo</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todos los datos de usuarios
+<span class="keyword">2. DONDE</span> el id NO ESTÉ EN:
+   <span class="keyword">2.1.</span> (subconsulta: todos los usuario_id de préstamos)`,
+    explanation: "<strong>NOT IN</strong> con una subconsulta es una forma de encontrar registros que NO tienen relación con otra tabla. La subconsulta devuelve una lista de IDs, y NOT IN excluye esos IDs.",
+    hints: [
+      "Necesitas una subconsulta que obtenga todos los usuario_id de prestamos",
+      "WHERE id NOT IN (SELECT usuario_id FROM prestamos)",
+      "SELECT * FROM usuarios WHERE id NOT IN (SELECT usuario_id FROM prestamos)"
+    ],
+    solution: "SELECT * FROM usuarios WHERE id NOT IN (SELECT usuario_id FROM prestamos);",
+    validate: { ignoreOrder: true, checkPattern: "NOT IN" }
+  },
+  {
+    id: 29,
+    dataset: "tienda",
+    level: "advanced",
+    title: "Clientes y su gasto total",
+    concept: "Subquery en SELECT",
+    statement: "Muestra el <strong>nombre de cada cliente</strong> y su <strong>gasto total</strong> (suma de totales de pedidos). Incluye clientes sin pedidos (gasto = 0). Ordena por gasto descendente.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> nombre del cliente,
+   y una subconsulta que calcule la suma de totales de sus pedidos
+<span class="keyword">2. DESDE</span> clientes
+<span class="keyword">3. ORDENAR POR</span> gasto_total descendente`,
+    explanation: "Una subconsulta en el SELECT calcula un valor para cada fila. COALESCE(valor, 0) reemplaza NULL por 0 cuando un cliente no tiene pedidos.",
+    hints: [
+      "La subconsulta va en el SELECT: (SELECT ... FROM pedidos WHERE cliente_id = c.id)",
+      "Usa COALESCE para convertir NULL a 0",
+      "SELECT c.nombre, COALESCE((SELECT SUM(p.total) FROM pedidos p WHERE p.cliente_id = c.id), 0) AS gasto_total FROM clientes c ORDER BY gasto_total DESC"
+    ],
+    solution: "SELECT c.nombre, COALESCE((SELECT SUM(p.total) FROM pedidos p WHERE p.cliente_id = c.id), 0) AS gasto_total FROM clientes c ORDER BY gasto_total DESC;",
+    validate: { ignoreOrder: false, checkPattern: "SELECT.*SELECT" }
+  },
+  {
+    id: 30,
+    dataset: "rrhh",
+    level: "advanced",
+    title: "Reporte completo con CTE",
+    concept: "CTE (WITH)",
+    statement: "Usando un CTE (WITH), crea una tabla temporal que tenga el nombre del departamento, cantidad de empleados y salario promedio. Luego selecciona de esa tabla solo los departamentos con <strong>más de 2 empleados</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. CON</span> resumen_dept COMO (
+   <span class="keyword">1.1. SELECCIONAR</span> departamento, conteo, promedio salario
+   <span class="keyword">1.2. DESDE</span> empleados + departamentos
+   <span class="keyword">1.3. AGRUPAR POR</span> departamento
+   )
+<span class="keyword">2. SELECCIONAR</span> todo del resumen
+<span class="keyword">3. DONDE</span> cantidad > 2`,
+    explanation: "<strong>WITH (CTE - Common Table Expression)</strong> crea una tabla temporal con nombre que puedes usar en la consulta principal. Hace consultas complejas más legibles dividiendo la lógica en partes.",
+    hints: [
+      "La sintaxis es: WITH nombre AS (SELECT ...) SELECT ... FROM nombre",
+      "El CTE contiene el JOIN y GROUP BY",
+      "WITH resumen AS (SELECT d.nombre AS departamento, COUNT(*) AS cantidad, AVG(e.salario) AS salario_promedio FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre) SELECT * FROM resumen WHERE cantidad > 2"
+    ],
+    solution: "WITH resumen AS (SELECT d.nombre AS departamento, COUNT(*) AS cantidad, AVG(e.salario) AS salario_promedio FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre) SELECT * FROM resumen WHERE cantidad > 2;",
+    validate: { ignoreOrder: true, checkPattern: "WITH" }
+  },
+
+  // ══════════════════════════════════════════════════
+  //  EJERCICIOS 31–70 (EXPANSIÓN)
+  // ══════════════════════════════════════════════════
+
+  // ── PRINCIPIANTE EXTRA (31-40) ──
+  {
+    id: 31,
+    dataset: "rrhh",
+    level: "beginner",
+    title: "Todos los empleados",
+    concept: "SELECT *",
+    statement: "Muestra todos los datos de la tabla <strong>empleados</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas (*)
+<span class="keyword">2. DESDE</span> la tabla empleados`,
+    explanation: "Es la consulta más básica de SQL: <strong>SELECT *</strong> trae todas las columnas y todas las filas de una tabla. El asterisco es un \"comodín\" que representa todas las columnas.",
+    hints: [
+      "SELECT es la primera palabra de toda consulta de lectura",
+      "* significa 'todas las columnas'",
+      "SELECT * FROM empleados"
+    ],
+    solution: "SELECT * FROM empleados;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 32,
+    dataset: "rrhh",
+    level: "beginner",
+    title: "Nombre completo y cargo",
+    concept: "SELECT columnas + alias",
+    statement: "Muestra el <strong>nombre</strong>, <strong>apellido</strong> y <strong>cargo</strong> de cada empleado. Renombra 'nombre' como <strong>primer_nombre</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> nombre (con alias primer_nombre), apellido, cargo
+<span class="keyword">2. DESDE</span> la tabla empleados`,
+    explanation: "<strong>AS</strong> crea un alias (nombre alternativo) para una columna en el resultado. No cambia la tabla real, solo el nombre mostrado. Ejemplo: nombre AS primer_nombre.",
+    hints: [
+      "AS crea un alias: columna AS nuevo_nombre",
+      "SELECT nombre AS primer_nombre, apellido, cargo",
+      "SELECT nombre AS primer_nombre, apellido, cargo FROM empleados"
+    ],
+    solution: "SELECT nombre AS primer_nombre, apellido, cargo FROM empleados;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 33,
+    dataset: "biblioteca",
+    level: "beginner",
+    title: "Libros disponibles",
+    concept: "WHERE con booleano",
+    statement: "Muestra el <strong>título</strong> y <strong>género</strong> de los libros que están <strong>disponibles</strong> (disponible = 1).",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> titulo, genero
+<span class="keyword">2. DESDE</span> la tabla libros
+<span class="keyword">3. DONDE</span> disponible sea igual a 1`,
+    explanation: "En SQLite no hay tipo booleano nativo; se usa INTEGER donde <strong>1 = verdadero</strong> y <strong>0 = falso</strong>. Filtras con WHERE disponible = 1.",
+    hints: [
+      "disponible = 1 significa que el libro está disponible",
+      "Selecciona solo titulo y genero",
+      "SELECT titulo, genero FROM libros WHERE disponible = 1"
+    ],
+    solution: "SELECT titulo, genero FROM libros WHERE disponible = 1;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 34,
+    dataset: "biblioteca",
+    level: "beginner",
+    title: "Libros antiguos",
+    concept: "WHERE + ORDER BY",
+    statement: "Muestra el <strong>título</strong> y <strong>año de publicación</strong> de los libros publicados <strong>antes de 1960</strong>. Ordena del más antiguo al más reciente.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> titulo, anio_publicacion
+<span class="keyword">2. DESDE</span> la tabla libros
+<span class="keyword">3. DONDE</span> anio_publicacion < 1960
+<span class="keyword">4. ORDENAR POR</span> anio_publicacion ascendente`,
+    explanation: "Puedes combinar WHERE y ORDER BY: primero filtra las filas, luego ordena el resultado. ASC (ascendente) es el orden por defecto, pero es buena práctica escribirlo explícitamente.",
+    hints: [
+      "< significa 'menor que' (antes de 1960)",
+      "ORDER BY anio_publicacion ASC ordena del más antiguo al más reciente",
+      "SELECT titulo, anio_publicacion FROM libros WHERE anio_publicacion < 1960 ORDER BY anio_publicacion ASC"
+    ],
+    solution: "SELECT titulo, anio_publicacion FROM libros WHERE anio_publicacion < 1960 ORDER BY anio_publicacion ASC;",
+    validate: { ignoreOrder: false }
+  },
+  {
+    id: 35,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Condiciones múltiples con AND",
+    concept: "WHERE + AND",
+    statement: "Muestra los productos de categoría <strong>'Electrónica'</strong> que además tengan <strong>precio menor a 300000</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. DONDE</span> categoría = 'Electrónica' Y precio < 300000`,
+    explanation: "<strong>AND</strong> combina múltiples condiciones: ambas deben cumplirse. <strong>OR</strong> requiere que al menos una se cumpla. Puedes combinar varios AND y OR con paréntesis para controlar la lógica.",
+    hints: [
+      "AND requiere que ambas condiciones sean verdaderas",
+      "WHERE categoria = 'Electrónica' AND precio < 300000",
+      "SELECT * FROM productos WHERE categoria = 'Electrónica' AND precio < 300000"
+    ],
+    solution: "SELECT * FROM productos WHERE categoria = 'Electrónica' AND precio < 300000;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 36,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Condiciones con OR",
+    concept: "WHERE + OR",
+    statement: "Muestra los productos de categoría <strong>'Muebles'</strong> o que tengan <strong>stock menor a 10</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. DONDE</span> categoría = 'Muebles' O stock < 10`,
+    explanation: "<strong>OR</strong> se cumple cuando al menos una de las condiciones es verdadera. Cuidado al mezclar AND y OR: usa <strong>paréntesis</strong> para agrupar condiciones si es necesario.",
+    hints: [
+      "OR requiere que al menos una condición sea verdadera",
+      "WHERE categoria = 'Muebles' OR stock < 10",
+      "SELECT * FROM productos WHERE categoria = 'Muebles' OR stock < 10"
+    ],
+    solution: "SELECT * FROM productos WHERE categoria = 'Muebles' OR stock < 10;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 37,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Nombre contiene texto",
+    concept: "LIKE con %",
+    statement: "Muestra los productos cuyo nombre <strong>contenga la palabra 'USB'</strong> (en cualquier posición).",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. DONDE</span> nombre sea COMO '%USB%'`,
+    explanation: "Con <strong>LIKE</strong>, el patrón <strong>'%texto%'</strong> busca 'texto' en cualquier posición del string. El % al inicio permite caracteres antes, y el % al final permite caracteres después.",
+    hints: [
+      "% al inicio Y al final = 'contiene'",
+      "LIKE '%USB%' busca USB en cualquier posición",
+      "SELECT * FROM productos WHERE nombre LIKE '%USB%'"
+    ],
+    solution: "SELECT * FROM productos WHERE nombre LIKE '%USB%';",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 38,
+    dataset: "biblioteca",
+    level: "beginner",
+    title: "Contar autores por país",
+    concept: "GROUP BY + COUNT",
+    statement: "Muestra cada <strong>nacionalidad</strong> y <strong>cuántos autores</strong> hay de esa nacionalidad (como total_autores).",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> nacionalidad y CONTEO
+<span class="keyword">2. DESDE</span> la tabla autores
+<span class="keyword">3. AGRUPAR POR</span> nacionalidad`,
+    explanation: "GROUP BY agrupa todas las filas que comparten el mismo valor en la columna indicada. Luego COUNT(*) cuenta cuántas filas hay en cada grupo.",
+    hints: [
+      "GROUP BY nacionalidad agrupa autores por país",
+      "COUNT(*) AS total_autores cuenta cada grupo",
+      "SELECT nacionalidad, COUNT(*) AS total_autores FROM autores GROUP BY nacionalidad"
+    ],
+    solution: "SELECT nacionalidad, COUNT(*) AS total_autores FROM autores GROUP BY nacionalidad;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 39,
+    dataset: "rrhh",
+    level: "beginner",
+    title: "Salario mínimo y máximo",
+    concept: "MIN y MAX",
+    statement: "Muestra el <strong>salario mínimo</strong> (como salario_minimo) y el <strong>salario máximo</strong> (como salario_maximo) de todos los empleados.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> el MÍNIMO y el MÁXIMO de salario
+<span class="keyword">2. DESDE</span> la tabla empleados`,
+    explanation: "<strong>MIN(columna)</strong> devuelve el valor más pequeño y <strong>MAX(columna)</strong> el más grande. Son funciones agregadas como COUNT, SUM y AVG.",
+    hints: [
+      "MIN(salario) devuelve el salario más bajo",
+      "MAX(salario) devuelve el salario más alto",
+      "SELECT MIN(salario) AS salario_minimo, MAX(salario) AS salario_maximo FROM empleados"
+    ],
+    solution: "SELECT MIN(salario) AS salario_minimo, MAX(salario) AS salario_maximo FROM empleados;",
+    validate: { ignoreOrder: true }
+  },
+  {
+    id: 40,
+    dataset: "tienda",
+    level: "beginner",
+    title: "Clientes registrados en 2023",
+    concept: "WHERE con fechas",
+    statement: "Muestra los clientes cuya <strong>fecha_registro</strong> sea del año 2023 (entre '2023-01-01' y '2023-12-31'). Ordena por fecha de registro.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> todas las columnas
+<span class="keyword">2. DESDE</span> la tabla clientes
+<span class="keyword">3. DONDE</span> fecha_registro ENTRE '2023-01-01' Y '2023-12-31'
+<span class="keyword">4. ORDENAR POR</span> fecha_registro`,
+    explanation: "Las fechas en SQLite se almacenan como texto en formato 'YYYY-MM-DD'. Puedes usar <strong>BETWEEN</strong> con fechas igual que con números. También funciona con los operadores >= y <=.",
+    hints: [
+      "BETWEEN funciona con fechas en formato 'YYYY-MM-DD'",
+      "WHERE fecha_registro BETWEEN '2023-01-01' AND '2023-12-31'",
+      "SELECT * FROM clientes WHERE fecha_registro BETWEEN '2023-01-01' AND '2023-12-31' ORDER BY fecha_registro"
+    ],
+    solution: "SELECT * FROM clientes WHERE fecha_registro BETWEEN '2023-01-01' AND '2023-12-31' ORDER BY fecha_registro;",
+    validate: { ignoreOrder: false }
+  },
+
+  // ── INTERMEDIO EXTRA (41-55) ──
+  {
+    id: 41,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Precio promedio por categoría",
+    concept: "GROUP BY + AVG",
+    statement: "Muestra cada <strong>categoría</strong> con su <strong>precio promedio</strong> (como precio_promedio) y el <strong>producto más caro</strong> (como precio_max). Ordena por precio promedio descendente.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> categoría, PROMEDIO de precio, MÁXIMO de precio
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. AGRUPAR POR</span> categoría
+<span class="keyword">4. ORDENAR POR</span> precio_promedio descendente`,
+    explanation: "Puedes usar múltiples funciones agregadas en un mismo SELECT con GROUP BY. Cada función se aplica de forma independiente a cada grupo.",
+    hints: [
+      "Puedes usar AVG() y MAX() en el mismo SELECT",
+      "SELECT categoria, AVG(precio) AS precio_promedio, MAX(precio) AS precio_max",
+      "...FROM productos GROUP BY categoria ORDER BY precio_promedio DESC"
+    ],
+    solution: "SELECT categoria, AVG(precio) AS precio_promedio, MAX(precio) AS precio_max FROM productos GROUP BY categoria ORDER BY precio_promedio DESC;",
+    validate: { ignoreOrder: false }
+  },
+  {
+    id: 42,
+    dataset: "rrhh",
+    level: "intermediate",
+    title: "Empleados del departamento Tecnología",
+    concept: "INNER JOIN + WHERE",
+    statement: "Muestra el <strong>nombre</strong>, <strong>apellido</strong> y <strong>cargo</strong> de los empleados que pertenecen al departamento <strong>'Tecnología'</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> empleados.nombre, empleados.apellido, empleados.cargo
+<span class="keyword">2. DESDE</span> empleados
+<span class="keyword">3. UNIR</span> con departamentos
+<span class="keyword">4. DONDE</span> departamentos.nombre = 'Tecnología'`,
+    explanation: "Combinar JOIN con WHERE es muy común: el JOIN une las tablas y el WHERE filtra los resultados. Recuerda usar alias para las tablas (ej: e para empleados, d para departamentos).",
+    hints: [
+      "JOIN une las tablas, WHERE filtra el resultado",
+      "ON e.departamento_id = d.id conecta las tablas",
+      "SELECT e.nombre, e.apellido, e.cargo FROM empleados e JOIN departamentos d ON e.departamento_id = d.id WHERE d.nombre = 'Tecnología'"
+    ],
+    solution: "SELECT e.nombre, e.apellido, e.cargo FROM empleados e JOIN departamentos d ON e.departamento_id = d.id WHERE d.nombre = 'Tecnología';",
+    validate: { ignoreOrder: true, checkPattern: "JOIN" }
+  },
+  {
+    id: 43,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Detalle completo de pedidos",
+    concept: "Múltiples JOINs",
+    statement: "Muestra el <strong>nombre del cliente</strong>, la <strong>fecha del pedido</strong>, el <strong>nombre del producto</strong> y la <strong>cantidad</strong> para cada línea de detalle de pedido.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> cliente.nombre, pedido.fecha, producto.nombre, detalle.cantidad
+<span class="keyword">2. DESDE</span> detalle_pedido
+<span class="keyword">3. UNIR</span> con pedidos (por pedido_id)
+<span class="keyword">4. UNIR</span> con clientes (por cliente_id del pedido)
+<span class="keyword">5. UNIR</span> con productos (por producto_id)`,
+    explanation: "Puedes encadenar múltiples JOINs para conectar 3 o más tablas. Cada JOIN necesita su propia condición ON. Es como construir un camino entre las tablas.",
+    hints: [
+      "Necesitas 3 JOINs: detalle→pedidos, pedidos→clientes, detalle→productos",
+      "FROM detalle_pedido dp JOIN pedidos p ON dp.pedido_id = p.id JOIN clientes c ON p.cliente_id = c.id JOIN productos pr ON dp.producto_id = pr.id",
+      "SELECT c.nombre AS cliente, p.fecha, pr.nombre AS producto, dp.cantidad FROM detalle_pedido dp JOIN pedidos p ON dp.pedido_id = p.id JOIN clientes c ON p.cliente_id = c.id JOIN productos pr ON dp.producto_id = pr.id"
+    ],
+    solution: "SELECT c.nombre AS cliente, p.fecha, pr.nombre AS producto, dp.cantidad FROM detalle_pedido dp JOIN pedidos p ON dp.pedido_id = p.id JOIN clientes c ON p.cliente_id = c.id JOIN productos pr ON dp.producto_id = pr.id;",
+    validate: { ignoreOrder: true, checkPattern: "JOIN" }
+  },
+  {
+    id: 44,
+    dataset: "biblioteca",
+    level: "intermediate",
+    title: "Libros por género con promedio de antigüedad",
+    concept: "GROUP BY + expresión",
+    statement: "Muestra cada <strong>género</strong>, la <strong>cantidad de libros</strong> y el <strong>año promedio de publicación</strong> (como anio_promedio). Solo géneros con más de 1 libro.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> genero, CONTEO, PROMEDIO de anio_publicacion
+<span class="keyword">2. DESDE</span> la tabla libros
+<span class="keyword">3. AGRUPAR POR</span> genero
+<span class="keyword">4. TENIENDO</span> conteo > 1`,
+    explanation: "Puedes aplicar AVG() a cualquier columna numérica, incluyendo años. HAVING filtra los grupos: solo muestra géneros que tengan más de un libro.",
+    hints: [
+      "AVG(anio_publicacion) calcula el año promedio",
+      "HAVING COUNT(*) > 1 filtra géneros con más de un libro",
+      "SELECT genero, COUNT(*) AS cantidad, AVG(anio_publicacion) AS anio_promedio FROM libros GROUP BY genero HAVING COUNT(*) > 1"
+    ],
+    solution: "SELECT genero, COUNT(*) AS cantidad, AVG(anio_publicacion) AS anio_promedio FROM libros GROUP BY genero HAVING COUNT(*) > 1;",
+    validate: { ignoreOrder: true, checkPattern: "HAVING" }
+  },
+  {
+    id: 45,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Ingreso por producto",
+    concept: "JOIN + SUM + expresión",
+    statement: "Muestra el <strong>nombre del producto</strong> y el <strong>ingreso total generado</strong> (cantidad × precio_unitario, como ingreso_total) de cada producto vendido. Ordena por ingreso descendente.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> producto.nombre y SUMA de (cantidad * precio_unitario)
+<span class="keyword">2. DESDE</span> detalle_pedido
+<span class="keyword">3. UNIR</span> con productos
+<span class="keyword">4. AGRUPAR POR</span> nombre del producto
+<span class="keyword">5. ORDENAR POR</span> ingreso_total descendente`,
+    explanation: "SUM() puede contener expresiones matemáticas. SUM(cantidad * precio_unitario) multiplica cada fila y luego suma los resultados de todo el grupo.",
+    hints: [
+      "SUM(dp.cantidad * dp.precio_unitario) calcula el ingreso total",
+      "JOIN productos p ON dp.producto_id = p.id",
+      "SELECT p.nombre, SUM(dp.cantidad * dp.precio_unitario) AS ingreso_total FROM detalle_pedido dp JOIN productos p ON dp.producto_id = p.id GROUP BY p.nombre ORDER BY ingreso_total DESC"
+    ],
+    solution: "SELECT p.nombre, SUM(dp.cantidad * dp.precio_unitario) AS ingreso_total FROM detalle_pedido dp JOIN productos p ON dp.producto_id = p.id GROUP BY p.nombre ORDER BY ingreso_total DESC;",
+    validate: { ignoreOrder: false, checkPattern: "JOIN" }
+  },
+  {
+    id: 46,
+    dataset: "rrhh",
+    level: "intermediate",
+    title: "Departamentos con rango salarial",
+    concept: "JOIN + MIN/MAX + GROUP BY",
+    statement: "Muestra el <strong>nombre del departamento</strong>, el <strong>salario mínimo</strong> (como sal_min) y el <strong>salario máximo</strong> (como sal_max) de cada departamento.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> departamento.nombre, MIN(salario), MAX(salario)
+<span class="keyword">2. DESDE</span> empleados
+<span class="keyword">3. UNIR</span> con departamentos
+<span class="keyword">4. AGRUPAR POR</span> nombre del departamento`,
+    explanation: "MIN() y MAX() dentro de GROUP BY muestran los extremos de cada grupo. Es útil para ver el rango salarial por departamento.",
+    hints: [
+      "MIN(e.salario) AS sal_min, MAX(e.salario) AS sal_max",
+      "JOIN departamentos d ON e.departamento_id = d.id",
+      "SELECT d.nombre, MIN(e.salario) AS sal_min, MAX(e.salario) AS sal_max FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre"
+    ],
+    solution: "SELECT d.nombre, MIN(e.salario) AS sal_min, MAX(e.salario) AS sal_max FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre;",
+    validate: { ignoreOrder: true, checkPattern: "JOIN" }
+  },
+  {
+    id: 47,
+    dataset: "biblioteca",
+    level: "intermediate",
+    title: "Usuarios con préstamos activos",
+    concept: "JOIN + WHERE IS NULL",
+    statement: "Muestra el <strong>nombre del usuario</strong> y el <strong>título del libro</strong> de los préstamos que <strong>aún no han sido devueltos</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> usuario.nombre, libro.titulo
+<span class="keyword">2. DESDE</span> prestamos
+<span class="keyword">3. UNIR</span> con usuarios
+<span class="keyword">4. UNIR</span> con libros
+<span class="keyword">5. DONDE</span> fecha_devolucion ES NULO`,
+    explanation: "IS NULL verifica que un campo no tiene valor asignado. Cuando fecha_devolucion IS NULL, significa que el libro aún no fue devuelto.",
+    hints: [
+      "WHERE p.fecha_devolucion IS NULL filtra préstamos activos",
+      "Necesitas 2 JOINs: prestamos→usuarios y prestamos→libros",
+      "SELECT u.nombre, l.titulo FROM prestamos p JOIN usuarios u ON p.usuario_id = u.id JOIN libros l ON p.libro_id = l.id WHERE p.fecha_devolucion IS NULL"
+    ],
+    solution: "SELECT u.nombre, l.titulo FROM prestamos p JOIN usuarios u ON p.usuario_id = u.id JOIN libros l ON p.libro_id = l.id WHERE p.fecha_devolucion IS NULL;",
+    validate: { ignoreOrder: true, checkPattern: "JOIN" }
+  },
+  {
+    id: 48,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Pedidos del primer trimestre 2024",
+    concept: "JOIN + WHERE fecha + SUM",
+    statement: "Muestra el <strong>nombre del cliente</strong> y el <strong>total gastado</strong> (como total_gastado) en pedidos entre <strong>'2024-01-01' y '2024-03-31'</strong>. Ordena por total descendente.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> cliente.nombre y SUMA de pedido.total
+<span class="keyword">2. DESDE</span> pedidos
+<span class="keyword">3. UNIR</span> con clientes
+<span class="keyword">4. DONDE</span> fecha ENTRE '2024-01-01' Y '2024-03-31'
+<span class="keyword">5. AGRUPAR POR</span> nombre del cliente
+<span class="keyword">6. ORDENAR POR</span> total_gastado descendente`,
+    explanation: "Filtrar por rango de fechas y agrupar es un patrón muy usado en reportes por período. BETWEEN funciona con fechas en formato 'YYYY-MM-DD'.",
+    hints: [
+      "WHERE p.fecha BETWEEN '2024-01-01' AND '2024-03-31'",
+      "SUM(p.total) AS total_gastado",
+      "SELECT c.nombre, SUM(p.total) AS total_gastado FROM pedidos p JOIN clientes c ON p.cliente_id = c.id WHERE p.fecha BETWEEN '2024-01-01' AND '2024-03-31' GROUP BY c.nombre ORDER BY total_gastado DESC"
+    ],
+    solution: "SELECT c.nombre, SUM(p.total) AS total_gastado FROM pedidos p JOIN clientes c ON p.cliente_id = c.id WHERE p.fecha BETWEEN '2024-01-01' AND '2024-03-31' GROUP BY c.nombre ORDER BY total_gastado DESC;",
+    validate: { ignoreOrder: false, checkPattern: "JOIN" }
+  },
+  {
+    id: 49,
+    dataset: "rrhh",
+    level: "intermediate",
+    title: "Empleados contratados por año",
+    concept: "Función de fecha + GROUP BY",
+    statement: "Muestra el <strong>año de contratación</strong> y <strong>cuántos empleados</strong> fueron contratados ese año (como cantidad). Usa la función <strong>strftime('%Y', fecha)</strong> para extraer el año. Ordena por año.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> extraer AÑO de fecha_contratacion y CONTEO
+<span class="keyword">2. DESDE</span> la tabla empleados
+<span class="keyword">3. AGRUPAR POR</span> el año extraído
+<span class="keyword">4. ORDENAR POR</span> año`,
+    explanation: "En SQLite, <strong>strftime('%Y', fecha)</strong> extrae el año de una fecha. Puedes usarlo en SELECT y GROUP BY para agrupar por año, mes, etc. '%m' extrae mes, '%d' día.",
+    hints: [
+      "strftime('%Y', fecha_contratacion) extrae el año",
+      "GROUP BY strftime('%Y', fecha_contratacion)",
+      "SELECT strftime('%Y', fecha_contratacion) AS anio, COUNT(*) AS cantidad FROM empleados GROUP BY strftime('%Y', fecha_contratacion) ORDER BY anio"
+    ],
+    solution: "SELECT strftime('%Y', fecha_contratacion) AS anio, COUNT(*) AS cantidad FROM empleados GROUP BY strftime('%Y', fecha_contratacion) ORDER BY anio;",
+    validate: { ignoreOrder: false }
+  },
+  {
+    id: 50,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Categorías con stock bajo",
+    concept: "GROUP BY + HAVING + SUM",
+    statement: "Muestra las categorías donde el <strong>stock total</strong> (suma de stock de todos sus productos) sea <strong>menor a 50</strong>. Muestra categoría y stock_total.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> categoría y SUMA del stock
+<span class="keyword">2. DESDE</span> la tabla productos
+<span class="keyword">3. AGRUPAR POR</span> categoría
+<span class="keyword">4. TENIENDO</span> suma de stock < 50`,
+    explanation: "HAVING con SUM te permite filtrar grupos basándote en la suma de una columna. Aquí encontramos categorías con poco inventario total.",
+    hints: [
+      "SUM(stock) AS stock_total suma el stock por categoría",
+      "HAVING SUM(stock) < 50 filtra categorías con poco stock",
+      "SELECT categoria, SUM(stock) AS stock_total FROM productos GROUP BY categoria HAVING SUM(stock) < 50"
+    ],
+    solution: "SELECT categoria, SUM(stock) AS stock_total FROM productos GROUP BY categoria HAVING SUM(stock) < 50;",
+    validate: { ignoreOrder: true, checkPattern: "HAVING" }
+  },
+  {
+    id: 51,
+    dataset: "biblioteca",
+    level: "intermediate",
+    title: "Ranking de usuarios lectores",
+    concept: "JOIN + COUNT + ORDER + LIMIT",
+    statement: "Muestra el <strong>nombre del usuario</strong> y la <strong>cantidad de préstamos</strong> que ha realizado (como total_prestamos). Ordena de mayor a menor y muestra los <strong>top 3</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> usuario.nombre y CONTEO de préstamos
+<span class="keyword">2. DESDE</span> prestamos
+<span class="keyword">3. UNIR</span> con usuarios
+<span class="keyword">4. AGRUPAR POR</span> nombre del usuario
+<span class="keyword">5. ORDENAR POR</span> total_prestamos descendente
+<span class="keyword">6. LIMITAR</span> a 3`,
+    explanation: "El patrón JOIN + COUNT + GROUP BY + ORDER BY DESC + LIMIT es el clásico \"ranking\" o \"top N\". Lo usarás constantemente en reportes reales.",
+    hints: [
+      "COUNT(*) AS total_prestamos cuenta préstamos por usuario",
+      "ORDER BY total_prestamos DESC LIMIT 3",
+      "SELECT u.nombre, COUNT(*) AS total_prestamos FROM prestamos p JOIN usuarios u ON p.usuario_id = u.id GROUP BY u.nombre ORDER BY total_prestamos DESC LIMIT 3"
+    ],
+    solution: "SELECT u.nombre, COUNT(*) AS total_prestamos FROM prestamos p JOIN usuarios u ON p.usuario_id = u.id GROUP BY u.nombre ORDER BY total_prestamos DESC LIMIT 3;",
+    validate: { ignoreOrder: false, checkPattern: "JOIN" }
+  },
+  {
+    id: 52,
+    dataset: "rrhh",
+    level: "intermediate",
+    title: "Empleados sin departamento Ventas",
+    concept: "JOIN + WHERE + NOT",
+    statement: "Muestra el <strong>nombre</strong>, <strong>apellido</strong> y <strong>nombre del departamento</strong> de todos los empleados que <strong>NO</strong> pertenecen al departamento de <strong>'Ventas'</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> empleado.nombre, apellido, departamento.nombre
+<span class="keyword">2. DESDE</span> empleados
+<span class="keyword">3. UNIR</span> con departamentos
+<span class="keyword">4. DONDE</span> departamento.nombre NO ES 'Ventas'`,
+    explanation: "<strong>!= o <>  </strong> significan \"diferente de\". También puedes usar <strong>NOT</strong> para negar condiciones: WHERE NOT (condición). Ambas formas son equivalentes para excluir valores.",
+    hints: [
+      "Usa != o <> para 'diferente de'",
+      "WHERE d.nombre != 'Ventas'",
+      "SELECT e.nombre, e.apellido, d.nombre AS departamento FROM empleados e JOIN departamentos d ON e.departamento_id = d.id WHERE d.nombre != 'Ventas'"
+    ],
+    solution: "SELECT e.nombre, e.apellido, d.nombre AS departamento FROM empleados e JOIN departamentos d ON e.departamento_id = d.id WHERE d.nombre != 'Ventas';",
+    validate: { ignoreOrder: true, checkPattern: "JOIN" }
+  },
+  {
+    id: 53,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Clientes sin pedidos (LEFT JOIN)",
+    concept: "LEFT JOIN + IS NULL",
+    statement: "Muestra los <strong>clientes que nunca hicieron un pedido</strong>. Usa LEFT JOIN. Muestra nombre y email.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> clientes.nombre, clientes.email
+<span class="keyword">2. DESDE</span> clientes
+<span class="keyword">3. UNIR (LEFT JOIN)</span> con pedidos
+<span class="keyword">4. DONDE</span> pedidos.id ES NULO`,
+    explanation: "LEFT JOIN + WHERE tabla_derecha.pk IS NULL es un patrón clásico para encontrar registros \"huérfanos\" — registros de la tabla izquierda que no tienen relación en la tabla derecha.",
+    hints: [
+      "LEFT JOIN mantiene todos los clientes, con o sin pedidos",
+      "Donde no hay pedido, pedidos.id será NULL",
+      "SELECT c.nombre, c.email FROM clientes c LEFT JOIN pedidos p ON c.id = p.cliente_id WHERE p.id IS NULL"
+    ],
+    solution: "SELECT c.nombre, c.email FROM clientes c LEFT JOIN pedidos p ON c.id = p.cliente_id WHERE p.id IS NULL;",
+    validate: { ignoreOrder: true, checkPattern: "LEFT JOIN" }
+  },
+  {
+    id: 54,
+    dataset: "tienda",
+    level: "intermediate",
+    title: "Productos nunca vendidos",
+    concept: "LEFT JOIN + IS NULL",
+    statement: "Muestra los <strong>productos que nunca aparecen en ningún detalle de pedido</strong>. Muestra nombre, categoría y precio.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> producto.nombre, categoría, precio
+<span class="keyword">2. DESDE</span> productos
+<span class="keyword">3. UNIR (LEFT JOIN)</span> con detalle_pedido
+<span class="keyword">4. DONDE</span> detalle_pedido.id ES NULO`,
+    explanation: "Mismo patrón que el ejercicio anterior: LEFT JOIN + IS NULL para encontrar registros sin coincidencia. Muy útil para encontrar inventario muerto, usuarios inactivos, etc.",
+    hints: [
+      "LEFT JOIN detalle_pedido dp ON p.id = dp.producto_id",
+      "WHERE dp.id IS NULL filtra los que nunca se vendieron",
+      "SELECT p.nombre, p.categoria, p.precio FROM productos p LEFT JOIN detalle_pedido dp ON p.id = dp.producto_id WHERE dp.id IS NULL"
+    ],
+    solution: "SELECT p.nombre, p.categoria, p.precio FROM productos p LEFT JOIN detalle_pedido dp ON p.id = dp.producto_id WHERE dp.id IS NULL;",
+    validate: { ignoreOrder: true, checkPattern: "LEFT JOIN" }
+  },
+  {
+    id: 55,
+    dataset: "biblioteca",
+    level: "intermediate",
+    title: "Préstamos por tipo de membresía",
+    concept: "JOIN + GROUP BY multi-tabla",
+    statement: "Muestra el <strong>tipo_membresia</strong> de los usuarios y la <strong>cantidad total de préstamos</strong> realizados por cada tipo. Ordena por cantidad descendente.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> usuario.tipo_membresia y CONTEO
+<span class="keyword">2. DESDE</span> prestamos
+<span class="keyword">3. UNIR</span> con usuarios
+<span class="keyword">4. AGRUPAR POR</span> tipo_membresia
+<span class="keyword">5. ORDENAR POR</span> cantidad descendente`,
+    explanation: "Agrupar por un campo de una tabla unida (JOIN + GROUP BY columna_otra_tabla) es un patrón frecuente en reportes que cruzan dimensiones.",
+    hints: [
+      "JOIN usuarios u ON p.usuario_id = u.id",
+      "GROUP BY u.tipo_membresia",
+      "SELECT u.tipo_membresia, COUNT(*) AS cantidad FROM prestamos p JOIN usuarios u ON p.usuario_id = u.id GROUP BY u.tipo_membresia ORDER BY cantidad DESC"
+    ],
+    solution: "SELECT u.tipo_membresia, COUNT(*) AS cantidad FROM prestamos p JOIN usuarios u ON p.usuario_id = u.id GROUP BY u.tipo_membresia ORDER BY cantidad DESC;",
+    validate: { ignoreOrder: false, checkPattern: "JOIN" }
+  },
+
+  // ── AVANZADO EXTRA (56-70) ──
+  {
+    id: 56,
+    dataset: "tienda",
+    level: "advanced",
+    title: "CASE WHEN: Clasificar precios",
+    concept: "CASE WHEN",
+    statement: "Muestra el <strong>nombre</strong> del producto y una columna <strong>rango_precio</strong> que diga: 'Económico' si precio < 100000, 'Medio' si está entre 100000 y 500000, 'Premium' si es > 500000.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> nombre,
+   <span class="keyword">CASO</span>
+     <span class="keyword">CUANDO</span> precio < 100000 <span class="keyword">ENTONCES</span> 'Económico'
+     <span class="keyword">CUANDO</span> precio <= 500000 <span class="keyword">ENTONCES</span> 'Medio'
+     <span class="keyword">SINO</span> 'Premium'
+   <span class="keyword">FIN</span> como rango_precio
+<span class="keyword">2. DESDE</span> productos`,
+    explanation: "<strong>CASE WHEN</strong> es como un IF/ELSE dentro de SQL. Evalúa condiciones en orden y devuelve el valor del primer THEN que coincida. ELSE es el valor por defecto.",
+    hints: [
+      "CASE WHEN condicion THEN valor WHEN ... ELSE ... END",
+      "CASE WHEN precio < 100000 THEN 'Económico' WHEN precio <= 500000 THEN 'Medio' ELSE 'Premium' END AS rango_precio",
+      "SELECT nombre, CASE WHEN precio < 100000 THEN 'Económico' WHEN precio <= 500000 THEN 'Medio' ELSE 'Premium' END AS rango_precio FROM productos"
+    ],
+    solution: "SELECT nombre, CASE WHEN precio < 100000 THEN 'Económico' WHEN precio <= 500000 THEN 'Medio' ELSE 'Premium' END AS rango_precio FROM productos;",
+    validate: { ignoreOrder: true, checkPattern: "CASE" }
+  },
+  {
+    id: 57,
+    dataset: "rrhh",
+    level: "advanced",
+    title: "CASE WHEN con conteo",
+    concept: "CASE WHEN + COUNT + GROUP BY",
+    statement: "Muestra cuántos empleados hay en cada rango salarial: <strong>'Bajo' (< 3500000)</strong>, <strong>'Medio' (3500000-5000000)</strong>, <strong>'Alto' (> 5000000)</strong>. Muestra rango y cantidad.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> CASO de salario como rango, CONTEO
+<span class="keyword">2. DESDE</span> empleados
+<span class="keyword">3. AGRUPAR POR</span> rango`,
+    explanation: "Puedes usar CASE WHEN dentro de GROUP BY para crear categorías personalizadas y luego contar cuántos registros caen en cada una.",
+    hints: [
+      "Usa CASE WHEN en el SELECT Y en el GROUP BY",
+      "CASE WHEN salario < 3500000 THEN 'Bajo' WHEN salario <= 5000000 THEN 'Medio' ELSE 'Alto' END",
+      "SELECT CASE WHEN salario < 3500000 THEN 'Bajo' WHEN salario <= 5000000 THEN 'Medio' ELSE 'Alto' END AS rango, COUNT(*) AS cantidad FROM empleados GROUP BY rango"
+    ],
+    solution: "SELECT CASE WHEN salario < 3500000 THEN 'Bajo' WHEN salario <= 5000000 THEN 'Medio' ELSE 'Alto' END AS rango, COUNT(*) AS cantidad FROM empleados GROUP BY rango;",
+    validate: { ignoreOrder: true, checkPattern: "CASE" }
+  },
+  {
+    id: 58,
+    dataset: "biblioteca",
+    level: "advanced",
+    title: "Autores argentinos con más libros",
+    concept: "Subquery + JOIN + filtro",
+    statement: "Muestra los <strong>autores de nacionalidad 'Argentina'</strong> junto con la <strong>cantidad de libros</strong> que tienen. Solo los que tengan <strong>más de 1 libro</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> autor.nombre, CONTEO de libros
+<span class="keyword">2. DESDE</span> autores
+<span class="keyword">3. UNIR</span> con libros
+<span class="keyword">4. DONDE</span> nacionalidad = 'Argentina'
+<span class="keyword">5. AGRUPAR POR</span> autor.nombre
+<span class="keyword">6. TENIENDO</span> conteo > 1`,
+    explanation: "Combinar WHERE (filtro antes de agrupar) con HAVING (filtro después de agrupar) es avanzado pero muy útil. WHERE filtra autores argentinos primero, HAVING filtra los que tienen más de 1 libro.",
+    hints: [
+      "WHERE va antes de GROUP BY, HAVING después",
+      "WHERE a.nacionalidad = 'Argentina' ... HAVING COUNT(*) > 1",
+      "SELECT a.nombre, COUNT(*) AS total_libros FROM autores a JOIN libros l ON l.autor_id = a.id WHERE a.nacionalidad = 'Argentina' GROUP BY a.nombre HAVING COUNT(*) > 1"
+    ],
+    solution: "SELECT a.nombre, COUNT(*) AS total_libros FROM autores a JOIN libros l ON l.autor_id = a.id WHERE a.nacionalidad = 'Argentina' GROUP BY a.nombre HAVING COUNT(*) > 1;",
+    validate: { ignoreOrder: true, checkPattern: "HAVING" }
+  },
+  {
+    id: 59,
+    dataset: "tienda",
+    level: "advanced",
+    title: "Producto más vendido por categoría",
+    concept: "Subquery correlacionada avanzada",
+    statement: "Para cada categoría, muestra el <strong>nombre del producto con mayor stock</strong>. Muestra categoría, nombre y stock.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> categoría, nombre, stock
+<span class="keyword">2. DESDE</span> productos (alias p1)
+<span class="keyword">3. DONDE</span> stock = (subconsulta:
+   MAX(stock) de productos p2
+   DONDE p2.categoría = p1.categoría)`,
+    explanation: "Una subconsulta correlacionada compara cada fila con un resumen de su propio grupo. Aquí, para cada producto, verificamos si su stock es el máximo de su categoría.",
+    hints: [
+      "La subconsulta busca el MAX(stock) de la misma categoría",
+      "WHERE p1.stock = (SELECT MAX(p2.stock) FROM productos p2 WHERE p2.categoria = p1.categoria)",
+      "SELECT p1.categoria, p1.nombre, p1.stock FROM productos p1 WHERE p1.stock = (SELECT MAX(p2.stock) FROM productos p2 WHERE p2.categoria = p1.categoria)"
+    ],
+    solution: "SELECT p1.categoria, p1.nombre, p1.stock FROM productos p1 WHERE p1.stock = (SELECT MAX(p2.stock) FROM productos p2 WHERE p2.categoria = p1.categoria);",
+    validate: { ignoreOrder: true, checkPattern: "SELECT.*SELECT" }
+  },
+  {
+    id: 60,
+    dataset: "rrhh",
+    level: "advanced",
+    title: "Concatenar nombre completo",
+    concept: "|| (concatenación)",
+    statement: "Muestra una columna <strong>nombre_completo</strong> que junte nombre y apellido con un espacio (ej: 'Ana García'), y el cargo. Ordena alfabéticamente por nombre_completo.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> nombre || ' ' || apellido como nombre_completo, cargo
+<span class="keyword">2. DESDE</span> empleados
+<span class="keyword">3. ORDENAR POR</span> nombre_completo`,
+    explanation: "En SQLite, el operador <strong>||</strong> concatena (une) textos. Ejemplo: 'Hola' || ' ' || 'Mundo' → 'Hola Mundo'. Es como el + de algunos lenguajes de programación.",
+    hints: [
+      "|| une textos en SQLite",
+      "nombre || ' ' || apellido AS nombre_completo",
+      "SELECT nombre || ' ' || apellido AS nombre_completo, cargo FROM empleados ORDER BY nombre_completo"
+    ],
+    solution: "SELECT nombre || ' ' || apellido AS nombre_completo, cargo FROM empleados ORDER BY nombre_completo;",
+    validate: { ignoreOrder: false }
+  },
+  {
+    id: 61,
+    dataset: "tienda",
+    level: "advanced",
+    title: "UNION: Productos caros y baratos",
+    concept: "UNION",
+    statement: "Crea una lista que muestre los <strong>3 productos más caros</strong> y los <strong>3 más baratos</strong>, con columnas: nombre, precio y una columna <strong>tipo</strong> ('Caro' o 'Barato'). Usa UNION.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1.</span> (SELECCIONAR nombre, precio, 'Caro' de productos
+     ORDENAR POR precio DESC LIMITAR 3)
+<span class="keyword">UNIÓN</span>
+<span class="keyword">2.</span> (SELECCIONAR nombre, precio, 'Barato' de productos
+     ORDENAR POR precio ASC LIMITAR 3)`,
+    explanation: "<strong>UNION</strong> combina los resultados de dos o más consultas SELECT en una sola tabla. Las consultas deben tener el mismo número y tipo de columnas. UNION elimina duplicados; UNION ALL los mantiene.",
+    hints: [
+      "Cada SELECT necesita las mismas columnas",
+      "Usa ORDER BY y LIMIT dentro de cada SELECT (entre paréntesis)",
+      "SELECT nombre, precio, 'Caro' AS tipo FROM productos ORDER BY precio DESC LIMIT 3 UNION SELECT nombre, precio, 'Barato' AS tipo FROM productos ORDER BY precio ASC LIMIT 3"
+    ],
+    solution: "SELECT nombre, precio, 'Caro' AS tipo FROM productos ORDER BY precio DESC LIMIT 3 UNION SELECT nombre, precio, 'Barato' AS tipo FROM productos ORDER BY precio ASC LIMIT 3;",
+    validate: { ignoreOrder: true, checkPattern: "UNION" }
+  },
+  {
+    id: 62,
+    dataset: "rrhh",
+    level: "advanced",
+    title: "Porcentaje del gasto salarial",
+    concept: "Subquery en SELECT + aritmética",
+    statement: "Muestra el <strong>nombre del departamento</strong>, la <strong>suma de salarios</strong> y el <strong>porcentaje</strong> que representa respecto al total global de salarios (como pct). Redondea a 1 decimal con ROUND.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> depto.nombre,
+   SUM(salario) como total,
+   ROUND(SUM(salario) * 100.0 / (subconsulta: suma total), 1) como pct
+<span class="keyword">2. DESDE</span> empleados + departamentos
+<span class="keyword">3. AGRUPAR POR</span> departamento`,
+    explanation: "Dividir la suma de un grupo por la suma total (obtenida con subconsulta) da el porcentaje. Multiplicar por 100.0 (con decimal) evita la división entera. ROUND(valor, decimales) redondea.",
+    hints: [
+      "La subconsulta del total: (SELECT SUM(salario) FROM empleados)",
+      "ROUND(SUM(e.salario) * 100.0 / (SELECT SUM(salario) FROM empleados), 1)",
+      "SELECT d.nombre, SUM(e.salario) AS total, ROUND(SUM(e.salario) * 100.0 / (SELECT SUM(salario) FROM empleados), 1) AS pct FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre"
+    ],
+    solution: "SELECT d.nombre, SUM(e.salario) AS total, ROUND(SUM(e.salario) * 100.0 / (SELECT SUM(salario) FROM empleados), 1) AS pct FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre;",
+    validate: { ignoreOrder: true, checkPattern: "SELECT.*SELECT" }
+  },
+  {
+    id: 63,
+    dataset: "biblioteca",
+    level: "advanced",
+    title: "Libros con más préstamos",
+    concept: "JOIN + COUNT + ORDER + LIMIT",
+    statement: "Muestra el <strong>título del libro</strong>, el <strong>nombre del autor</strong> y la <strong>cantidad de veces que fue prestado</strong> (como veces_prestado). Top 5 más prestados.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> libro.titulo, autor.nombre, CONTEO
+<span class="keyword">2. DESDE</span> prestamos
+<span class="keyword">3. UNIR</span> con libros
+<span class="keyword">4. UNIR</span> con autores
+<span class="keyword">5. AGRUPAR POR</span> titulo, autor
+<span class="keyword">6. ORDENAR POR</span> veces_prestado DESC
+<span class="keyword">7. LIMITAR</span> 5`,
+    explanation: "Encadenar 2 JOINs y luego agrupar con ORDER BY + LIMIT es un patrón de ranking multi-tabla. GROUP BY necesita todas las columnas no agregadas del SELECT.",
+    hints: [
+      "JOIN libros l ON p.libro_id = l.id JOIN autores a ON l.autor_id = a.id",
+      "GROUP BY l.titulo, a.nombre (ambas columnas no agregadas)",
+      "SELECT l.titulo, a.nombre AS autor, COUNT(*) AS veces_prestado FROM prestamos p JOIN libros l ON p.libro_id = l.id JOIN autores a ON l.autor_id = a.id GROUP BY l.titulo, a.nombre ORDER BY veces_prestado DESC LIMIT 5"
+    ],
+    solution: "SELECT l.titulo, a.nombre AS autor, COUNT(*) AS veces_prestado FROM prestamos p JOIN libros l ON p.libro_id = l.id JOIN autores a ON l.autor_id = a.id GROUP BY l.titulo, a.nombre ORDER BY veces_prestado DESC LIMIT 5;",
+    validate: { ignoreOrder: false, checkPattern: "JOIN" }
+  },
+  {
+    id: 64,
+    dataset: "tienda",
+    level: "advanced",
+    title: "COALESCE con LEFT JOIN",
+    concept: "COALESCE + LEFT JOIN + SUM",
+    statement: "Muestra <strong>todos los productos</strong> con su nombre y el <strong>total de unidades vendidas</strong> (como unidades_vendidas). Productos sin ventas deben mostrar <strong>0</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> producto.nombre,
+   COALESCE(SUMA de cantidad, 0) como unidades_vendidas
+<span class="keyword">2. DESDE</span> productos
+<span class="keyword">3. UNIR (LEFT JOIN)</span> con detalle_pedido
+<span class="keyword">4. AGRUPAR POR</span> producto.nombre
+<span class="keyword">5. ORDENAR POR</span> unidades_vendidas DESC`,
+    explanation: "<strong>COALESCE</strong> devuelve el primer valor no NULL de una lista. COALESCE(SUM(...), 0) convierte NULL (cuando no hay ventas) a 0. Es esencial con LEFT JOIN para evitar NULLs inesperados.",
+    hints: [
+      "LEFT JOIN mantiene todos los productos",
+      "COALESCE(SUM(dp.cantidad), 0) convierte NULL a 0",
+      "SELECT p.nombre, COALESCE(SUM(dp.cantidad), 0) AS unidades_vendidas FROM productos p LEFT JOIN detalle_pedido dp ON p.id = dp.producto_id GROUP BY p.nombre ORDER BY unidades_vendidas DESC"
+    ],
+    solution: "SELECT p.nombre, COALESCE(SUM(dp.cantidad), 0) AS unidades_vendidas FROM productos p LEFT JOIN detalle_pedido dp ON p.id = dp.producto_id GROUP BY p.nombre ORDER BY unidades_vendidas DESC;",
+    validate: { ignoreOrder: false, checkPattern: "LEFT JOIN" }
+  },
+  {
+    id: 65,
+    dataset: "rrhh",
+    level: "advanced",
+    title: "CTE: Empleados sobre el promedio global",
+    concept: "CTE + comparación",
+    statement: "Usando un CTE, calcula el <strong>salario promedio global</strong>. Luego muestra nombre, apellido y salario de los empleados que ganan <strong>más que ese promedio</strong>. Ordena por salario DESC.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. CON</span> promedio_global COMO (
+   SELECT AVG(salario) AS avg_sal FROM empleados
+   )
+<span class="keyword">2. SELECCIONAR</span> nombre, apellido, salario
+<span class="keyword">3. DESDE</span> empleados, promedio_global
+<span class="keyword">4. DONDE</span> salario > avg_sal
+<span class="keyword">5. ORDENAR POR</span> salario DESC`,
+    explanation: "Un CTE puede almacenar un valor calculado (como un promedio) que luego usas en la consulta principal. Es más legible que una subconsulta directa en el WHERE.",
+    hints: [
+      "El CTE calcula: WITH prom AS (SELECT AVG(salario) AS avg_sal FROM empleados)",
+      "En la consulta principal, cruza con el CTE: FROM empleados, prom",
+      "WITH prom AS (SELECT AVG(salario) AS avg_sal FROM empleados) SELECT nombre, apellido, salario FROM empleados, prom WHERE salario > avg_sal ORDER BY salario DESC"
+    ],
+    solution: "WITH prom AS (SELECT AVG(salario) AS avg_sal FROM empleados) SELECT nombre, apellido, salario FROM empleados, prom WHERE salario > avg_sal ORDER BY salario DESC;",
+    validate: { ignoreOrder: false, checkPattern: "WITH" }
+  },
+  {
+    id: 66,
+    dataset: "tienda",
+    level: "advanced",
+    title: "EXISTS: Clientes que compraron electrónica",
+    concept: "EXISTS + subquery",
+    statement: "Muestra los <strong>clientes que compraron al menos un producto de categoría 'Electrónica'</strong>. Usa EXISTS. Muestra nombre y email.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> nombre, email
+<span class="keyword">2. DESDE</span> clientes c
+<span class="keyword">3. DONDE EXISTE</span> (
+   subconsulta que busque pedidos del cliente
+   con productos de categoría 'Electrónica'
+   )`,
+    explanation: "<strong>EXISTS</strong> devuelve TRUE si la subconsulta devuelve al menos una fila. Es eficiente para verificar \"¿existe algún registro que cumpla X?\". Es alternativa a IN con subconsultas.",
+    hints: [
+      "EXISTS verifica si la subconsulta tiene resultados",
+      "La subconsulta une pedidos → detalle_pedido → productos y filtra por Electrónica",
+      "SELECT c.nombre, c.email FROM clientes c WHERE EXISTS (SELECT 1 FROM pedidos p JOIN detalle_pedido dp ON p.id = dp.pedido_id JOIN productos pr ON dp.producto_id = pr.id WHERE p.cliente_id = c.id AND pr.categoria = 'Electrónica')"
+    ],
+    solution: "SELECT c.nombre, c.email FROM clientes c WHERE EXISTS (SELECT 1 FROM pedidos p JOIN detalle_pedido dp ON p.id = dp.pedido_id JOIN productos pr ON dp.producto_id = pr.id WHERE p.cliente_id = c.id AND pr.categoria = 'Electrónica');",
+    validate: { ignoreOrder: true, checkPattern: "EXISTS" }
+  },
+  {
+    id: 67,
+    dataset: "biblioteca",
+    level: "advanced",
+    title: "CTE: Resumen de actividad por usuario",
+    concept: "CTE + CASE WHEN + JOIN",
+    statement: "Con un CTE, calcula por cada usuario: nombre, total_prestamos, y tipo_lector ('Activo' si >= 2 préstamos, 'Casual' si < 2). Muestra solo usuarios con al menos 1 préstamo.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. CON</span> actividad COMO (
+   SELECT usuario, conteo de préstamos
+   FROM prestamos + usuarios
+   GROUP BY usuario
+   )
+<span class="keyword">2. SELECCIONAR</span> nombre, total_prestamos,
+   CASE WHEN total >= 2 THEN 'Activo' ELSE 'Casual' END
+<span class="keyword">3. DESDE</span> actividad`,
+    explanation: "Combinar CTE con CASE WHEN permite primero calcular métricas y luego clasificarlas. Es un patrón muy usado en dashboards y reportes de segmentación.",
+    hints: [
+      "El CTE calcula préstamos por usuario con JOIN + GROUP BY",
+      "En la consulta principal, usa CASE WHEN sobre el resultado del CTE",
+      "WITH actividad AS (SELECT u.nombre, COUNT(*) AS total_prestamos FROM prestamos p JOIN usuarios u ON p.usuario_id = u.id GROUP BY u.nombre) SELECT nombre, total_prestamos, CASE WHEN total_prestamos >= 2 THEN 'Activo' ELSE 'Casual' END AS tipo_lector FROM actividad"
+    ],
+    solution: "WITH actividad AS (SELECT u.nombre, COUNT(*) AS total_prestamos FROM prestamos p JOIN usuarios u ON p.usuario_id = u.id GROUP BY u.nombre) SELECT nombre, total_prestamos, CASE WHEN total_prestamos >= 2 THEN 'Activo' ELSE 'Casual' END AS tipo_lector FROM actividad;",
+    validate: { ignoreOrder: true, checkPattern: "WITH" }
+  },
+  {
+    id: 68,
+    dataset: "tienda",
+    level: "advanced",
+    title: "Pedido con mayor total",
+    concept: "Subquery en WHERE con MAX",
+    statement: "Muestra el <strong>nombre del cliente</strong>, la <strong>fecha</strong> y el <strong>total</strong> del pedido con el <strong>mayor monto total</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. SELECCIONAR</span> cliente.nombre, pedido.fecha, pedido.total
+<span class="keyword">2. DESDE</span> pedidos
+<span class="keyword">3. UNIR</span> con clientes
+<span class="keyword">4. DONDE</span> total = (subconsulta: MAX(total) de pedidos)`,
+    explanation: "Usar una subconsulta con MAX() en WHERE te permite encontrar el registro con el valor más alto sin necesidad de ORDER BY + LIMIT. Es útil cuando podría haber empates.",
+    hints: [
+      "La subconsulta: (SELECT MAX(total) FROM pedidos)",
+      "WHERE p.total = (SELECT MAX(total) FROM pedidos)",
+      "SELECT c.nombre, p.fecha, p.total FROM pedidos p JOIN clientes c ON p.cliente_id = c.id WHERE p.total = (SELECT MAX(total) FROM pedidos)"
+    ],
+    solution: "SELECT c.nombre, p.fecha, p.total FROM pedidos p JOIN clientes c ON p.cliente_id = c.id WHERE p.total = (SELECT MAX(total) FROM pedidos);",
+    validate: { ignoreOrder: true, checkPattern: "SELECT.*SELECT" }
+  },
+  {
+    id: 69,
+    dataset: "rrhh",
+    level: "advanced",
+    title: "Múltiples CTEs: Reporte de RRHH",
+    concept: "Múltiples CTEs",
+    statement: "Usando <strong>2 CTEs</strong>: el primero (dept_stats) con nombre de departamento, cantidad de empleados y salario promedio. El segundo (empresa_stats) con el salario promedio global. Muestra los departamentos cuyo salario promedio <strong>supere al promedio global</strong>.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. CON</span> dept_stats COMO (
+   departamento, conteo, avg_salario
+   ),
+   empresa_stats COMO (
+   avg_global
+   )
+<span class="keyword">2. SELECCIONAR</span> de dept_stats
+<span class="keyword">3. DONDE</span> avg_salario > (SELECT avg_global FROM empresa_stats)`,
+    explanation: "Puedes definir <strong>múltiples CTEs</strong> separados por comas. Cada CTE puede hacer referencia a los anteriores. Es ideal para construir reportes complejos paso a paso.",
+    hints: [
+      "WITH cte1 AS (...), cte2 AS (...) SELECT ... FROM cte1",
+      "dept_stats: JOIN + GROUP BY. empresa_stats: AVG(salario)",
+      "WITH dept_stats AS (SELECT d.nombre, COUNT(*) AS cantidad, AVG(e.salario) AS avg_salario FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre), empresa_stats AS (SELECT AVG(salario) AS avg_global FROM empleados) SELECT ds.* FROM dept_stats ds, empresa_stats es WHERE ds.avg_salario > es.avg_global"
+    ],
+    solution: "WITH dept_stats AS (SELECT d.nombre, COUNT(*) AS cantidad, AVG(e.salario) AS avg_salario FROM empleados e JOIN departamentos d ON e.departamento_id = d.id GROUP BY d.nombre), empresa_stats AS (SELECT AVG(salario) AS avg_global FROM empleados) SELECT ds.* FROM dept_stats ds, empresa_stats es WHERE ds.avg_salario > es.avg_global;",
+    validate: { ignoreOrder: true, checkPattern: "WITH" }
+  },
+  {
+    id: 70,
+    dataset: "tienda",
+    level: "advanced",
+    title: "Reporte maestro: Top clientes",
+    concept: "CTE + JOIN + CASE + múltiples agregaciones",
+    statement: "Crea un reporte que muestre para cada cliente: <strong>nombre</strong>, <strong>total_pedidos</strong> (cantidad), <strong>gasto_total</strong> (suma de totales), <strong>ticket_promedio</strong> (promedio por pedido) y <strong>nivel</strong> ('VIP' si gasto > 2000000, 'Regular' si > 500000, 'Nuevo' si no). Ordena por gasto descendente. Usa CTE.",
+    pseudocode: `<span class="comment">-- Receta paso a paso:</span>
+<span class="keyword">1. CON</span> resumen_clientes COMO (
+   SELECT cliente, conteo pedidos, suma totales, promedio
+   FROM pedidos + clientes
+   GROUP BY cliente
+   )
+<span class="keyword">2. SELECCIONAR</span> todo del resumen +
+   CASE WHEN gasto_total > 2000000 THEN 'VIP'
+        WHEN gasto_total > 500000 THEN 'Regular'
+        ELSE 'Nuevo' END
+<span class="keyword">3. ORDENAR POR</span> gasto_total DESC`,
+    explanation: "Este ejercicio final combina todo lo aprendido: CTE para organizar, JOIN para unir tablas, funciones agregadas para calcular métricas, CASE WHEN para clasificar, y ORDER BY para ordenar. ¡Es un reporte profesional completo!",
+    hints: [
+      "El CTE usa: JOIN clientes + GROUP BY + COUNT + SUM + AVG",
+      "La consulta principal agrega CASE WHEN sobre gasto_total",
+      "WITH resumen AS (SELECT c.nombre, COUNT(*) AS total_pedidos, SUM(p.total) AS gasto_total, AVG(p.total) AS ticket_promedio FROM pedidos p JOIN clientes c ON p.cliente_id = c.id GROUP BY c.nombre) SELECT nombre, total_pedidos, gasto_total, ROUND(ticket_promedio, 0) AS ticket_promedio, CASE WHEN gasto_total > 2000000 THEN 'VIP' WHEN gasto_total > 500000 THEN 'Regular' ELSE 'Nuevo' END AS nivel FROM resumen ORDER BY gasto_total DESC"
+    ],
+    solution: "WITH resumen AS (SELECT c.nombre, COUNT(*) AS total_pedidos, SUM(p.total) AS gasto_total, AVG(p.total) AS ticket_promedio FROM pedidos p JOIN clientes c ON p.cliente_id = c.id GROUP BY c.nombre) SELECT nombre, total_pedidos, gasto_total, ROUND(ticket_promedio, 0) AS ticket_promedio, CASE WHEN gasto_total > 2000000 THEN 'VIP' WHEN gasto_total > 500000 THEN 'Regular' ELSE 'Nuevo' END AS nivel FROM resumen ORDER BY gasto_total DESC;",
+    validate: { ignoreOrder: false, checkPattern: "WITH" }
+  }
+];
+
+// ─── CHEATSHEET ───
+const CHEATSHEET = [
+  { title: "SELECT básico", syntax: "SELECT columna1, columna2\nFROM tabla;", desc: "Selecciona columnas específicas de una tabla" },
+  { title: "SELECT todo", syntax: "SELECT * FROM tabla;", desc: "Selecciona todas las columnas" },
+  { title: "WHERE", syntax: "SELECT * FROM tabla\nWHERE condicion;", desc: "Filtra filas. Operadores: =, >, <, >=, <=, <>, !=, LIKE, IN, BETWEEN" },
+  { title: "ORDER BY", syntax: "SELECT * FROM tabla\nORDER BY columna ASC|DESC;", desc: "Ordena resultados. ASC=ascendente, DESC=descendente" },
+  { title: "LIMIT", syntax: "SELECT * FROM tabla\nLIMIT n;", desc: "Limita la cantidad de filas devueltas" },
+  { title: "DISTINCT", syntax: "SELECT DISTINCT columna\nFROM tabla;", desc: "Elimina duplicados del resultado" },
+  { title: "LIKE", syntax: "WHERE columna LIKE 'patrón'\n-- % = cualquier texto\n-- _ = un carácter", desc: "Busca patrones en texto" },
+  { title: "IN", syntax: "WHERE columna IN ('val1','val2');", desc: "Filtra por lista de valores" },
+  { title: "BETWEEN", syntax: "WHERE columna BETWEEN a AND b;", desc: "Filtra rango (incluye extremos)" },
+  { title: "COUNT / SUM / AVG", syntax: "SELECT COUNT(*), SUM(col), AVG(col)\nFROM tabla;", desc: "Funciones agregadas: contar, sumar, promediar" },
+  { title: "GROUP BY", syntax: "SELECT col, COUNT(*)\nFROM tabla\nGROUP BY col;", desc: "Agrupa filas por valor de columna" },
+  { title: "HAVING", syntax: "SELECT col, COUNT(*) AS n\nFROM tabla\nGROUP BY col\nHAVING n > 5;", desc: "Filtra grupos (como WHERE pero para grupos)" },
+  { title: "INNER JOIN", syntax: "SELECT *\nFROM t1\nINNER JOIN t2 ON t1.fk = t2.id;", desc: "Une tablas donde hay coincidencia" },
+  { title: "LEFT JOIN", syntax: "SELECT *\nFROM t1\nLEFT JOIN t2 ON t1.fk = t2.id;", desc: "Todas las filas de t1 + coincidencias de t2" },
+  { title: "Subquery", syntax: "SELECT * FROM tabla\nWHERE col > (SELECT AVG(col) FROM tabla);", desc: "Consulta dentro de otra consulta" },
+  { title: "CTE (WITH)", syntax: "WITH nombre AS (\n  SELECT ...\n)\nSELECT * FROM nombre;", desc: "Tabla temporal con nombre" },
+  { title: "Alias", syntax: "SELECT nombre AS n\nFROM tabla AS t;", desc: "Renombra columnas o tablas temporalmente" },
+  { title: "IS NULL", syntax: "WHERE columna IS NULL;\nWHERE columna IS NOT NULL;", desc: "Verifica si un valor es nulo o no" },
+  { title: "COALESCE", syntax: "COALESCE(valor, alternativa)", desc: "Devuelve el primer valor no NULL" },
+  { title: "Orden de cláusulas", syntax: "SELECT → FROM → JOIN → WHERE\n→ GROUP BY → HAVING\n→ ORDER BY → LIMIT", desc: "Orden obligatorio de las cláusulas SQL" },
+  { title: "CASE WHEN", syntax: "CASE\n  WHEN condicion1 THEN 'val1'\n  WHEN condicion2 THEN 'val2'\n  ELSE 'default'\nEND AS alias", desc: "Condicional IF/ELSE dentro de SQL" },
+  { title: "UNION", syntax: "SELECT ... FROM t1\nUNION\nSELECT ... FROM t2;", desc: "Combina resultados de 2+ consultas (mismas columnas)" },
+  { title: "EXISTS", syntax: "WHERE EXISTS (\n  SELECT 1 FROM tabla WHERE ...\n);", desc: "TRUE si la subconsulta devuelve al menos una fila" },
+  { title: "Concatenación ||", syntax: "SELECT col1 || ' ' || col2\nAS completo FROM tabla;", desc: "Une textos con el operador ||" },
+  { title: "ROUND", syntax: "ROUND(valor, decimales)", desc: "Redondea un número al nro de decimales indicado" },
+  { title: "strftime (SQLite)", syntax: "strftime('%Y', fecha)  -- año\nstrftime('%m', fecha)  -- mes\nstrftime('%d', fecha)  -- día", desc: "Extrae partes de una fecha en SQLite" }
+];
+
+
+// ═══════════════════════════════════════
+//  INITIALIZATION
+// ═══════════════════════════════════════
+
+async function init() {
+  // Load sql.js
+  try {
+    const SQL = await initSqlJs({
+      locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${f}`
+    });
+    window.SQL = SQL;
+    logConsole("Motor SQLite cargado correctamente", "success");
+  } catch(e) {
+    logConsole("Error al cargar SQLite: " + e.message, "error");
+    document.getElementById("loading").classList.add("hidden");
+    return;
+  }
+
+  // Load progress
+  loadProgress();
+
+  // Render UI
+  renderDatasetSelector();
+  renderCheatsheet();
+
+  // Setup editor
+  setupEditor();
+
+  // Navigate to first incomplete exercise (preserves state on refresh)
+  const resumeEx = getFirstIncomplete();
+  selectDataset(resumeEx.dataset);
+  selectExercise(resumeEx.id);
+
+  if (progress.completed.length > 0) {
+    logConsole(`📌 Retomando desde donde lo dejaste — ${progress.completed.length}/${EXERCISES.length} completados`, "info");
+  }
+
+  // Hide loading
+  setTimeout(() => {
+    document.getElementById("loading").classList.add("hidden");
+  }, 600);
+}
+
+// ═══════════════════════════════════════
+//  DATABASE
+// ═══════════════════════════════════════
+
+function initDatabase(datasetKey) {
+  if (db) db.close();
+  db = new window.SQL.Database();
+  const dataset = DATASETS[datasetKey];
+  try {
+    db.run(dataset.sql);
+    logConsole(`Dataset "${dataset.name}" cargado: ${dataset.schema.length} tablas`, "success");
+  } catch(e) {
+    logConsole("Error al cargar dataset: " + e.message, "error");
+  }
+}
+
+function runQuery(sql) {
+  try {
+    const results = db.exec(sql);
+    return { success: true, results };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+}
+
+// ═══════════════════════════════════════
+//  UI RENDERING
+// ═══════════════════════════════════════
+
+function renderDatasetSelector() {
+  const el = document.getElementById("dataset-selector");
+  el.innerHTML = Object.entries(DATASETS).map(([key, ds]) =>
+    `<button class="dataset-btn" data-key="${key}" onclick="selectDataset('${key}')">${ds.icon} ${ds.name}</button>`
+  ).join("");
+}
+
+function selectDataset(key) {
+  currentDataset = key;
+  initDatabase(key);
+
+  // Update buttons
+  document.querySelectorAll(".dataset-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.key === key);
+  });
+
+  // Render exercises for this dataset (plus all)
+  renderExerciseList();
+
+  // Render schema
+  renderSchema();
+
+  // Select first exercise of this dataset
+  const firstEx = EXERCISES.find(e => e.dataset === key);
+  if (firstEx) selectExercise(firstEx.id);
+}
+
+function renderExerciseList() {
+  const el = document.getElementById("exercise-list");
+  const levels = [
+    { key: "beginner", label: "🟢 Principiante" },
+    { key: "intermediate", label: "🔵 Intermedio" },
+    { key: "advanced", label: "🟣 Intermedio+" }
+  ];
+
+  let html = "";
+  let displayNum = 0;
+
+  for (const level of levels) {
+    const exs = EXERCISES.filter(e => e.level === level.key);
+    if (exs.length === 0) continue;
+    html += `<div class="exercise-group-title">${level.label} (${exs.filter(e => progress.completed.includes(e.id)).length}/${exs.length})</div>`;
+    for (const ex of exs) {
+      displayNum++;
+      const done = progress.completed.includes(ex.id);
+      const active = currentExercise && currentExercise.id === ex.id;
+      const dsIcon = DATASETS[ex.dataset]?.icon || "";
+      html += `
+        <div class="exercise-item ${done ? 'completed' : ''} ${active ? 'active' : ''}"
+             onclick="selectExercise(${ex.id})" data-id="${ex.id}">
+          <div class="status">${done ? '✓' : ''}</div>
+          <div class="ex-info">
+            <div class="ex-title"><span class="ex-counter">${displayNum}</span> ${ex.title}</div>
+            <div class="ex-tags">
+              <span class="ex-tag ${ex.level}">${ex.concept}</span>
+              <span style="font-size:10px;color:var(--text-muted)">${dsIcon}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }
+  el.innerHTML = html;
+}
+
+function selectExercise(id) {
+  const ex = EXERCISES.find(e => e.id === id);
+  if (!ex) return;
+
+  // Cancel any pending auto-next timer
+  if (autoNextTimer) { clearTimeout(autoNextTimer); autoNextTimer = null; }
+
+  // Switch dataset if needed
+  if (currentDataset !== ex.dataset) {
+    currentDataset = ex.dataset;
+    initDatabase(ex.dataset);
+    document.querySelectorAll(".dataset-btn").forEach(b => {
+      b.classList.toggle("active", b.dataset.key === ex.dataset);
+    });
+    renderSchema();
+  }
+
+  currentExercise = ex;
+
+  // Update sidebar
+  document.querySelectorAll(".exercise-item").forEach(el => {
+    el.classList.toggle("active", parseInt(el.dataset.id) === id);
+  });
+
+  // Scroll active item into view in sidebar
+  const activeItem = document.querySelector(`.exercise-item[data-id="${id}"]`);
+  if (activeItem) activeItem.scrollIntoView({ block: "nearest", behavior: "smooth" });
+
+  // Render exercise panel
+  renderExercisePanel(ex);
+
+  // Switch to exercise tab
+  switchRightTab("exercise");
+
+  // Clear editor, set placeholder, and focus
+  const editor = document.getElementById("sql-editor");
+  const dispIdx = getDisplayIndex(ex);
+  editor.value = "";
+  editor.placeholder = `-- Ejercicio ${dispIdx}: ${ex.title}\n-- Escribe tu consulta SQL aquí...\n-- Ctrl+Enter = Ejecutar | Ctrl+Shift+Enter = Validar`;
+  updateLineNumbers();
+  setTimeout(() => editor.focus(), 100);
+
+  // Reset results panel
+  document.getElementById("tab-results").innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-muted);">Ejecuta una consulta para ver resultados aquí</div>`;
+  document.getElementById("tab-validation").innerHTML = `<div style="padding:14px;color:var(--text-muted);">Presiona "Validar" para verificar tu respuesta</div>`;
+}
+
+function renderExercisePanel(ex) {
+  const el = document.getElementById("rtab-exercise");
+  const done = progress.completed.includes(ex.id);
+  const dispIdx = getDisplayIndex(ex);
+  const dsInfo = DATASETS[ex.dataset];
+  const levelLabels = { beginner: "Principiante", intermediate: "Intermedio", advanced: "Avanzado" };
+
+  el.innerHTML = `
+    <div class="fade-in">
+      <div class="exercise-header">
+        <div class="exercise-number">
+          Ejercicio ${dispIdx} de ${EXERCISES.length}
+          <span style="margin-left:6px;color:var(--text-muted);">•</span>
+          <span style="margin-left:6px;font-size:10px;color:var(--text-muted);">${dsInfo.icon} ${dsInfo.name}</span>
+          ${done ? '<span style="margin-left:8px;color:var(--success)">✓ Completado</span>' : ''}
+        </div>
+        <div class="exercise-title-main">${ex.title}</div>
+        <span class="exercise-concept-tag">${ex.concept}</span>
+        <span class="ex-tag ${ex.level}" style="margin-left:6px;font-size:10px;padding:2px 8px;">${levelLabels[ex.level]}</span>
+      </div>
+
+      <div class="exercise-statement">${ex.statement}</div>
+
+      <div class="section-label">📖 Concepto</div>
+      <div class="concept-explanation">${ex.explanation}</div>
+
+      <div class="section-label">📋 Pseudocódigo</div>
+      <div class="pseudocode-block">${ex.pseudocode}</div>
+
+      <div class="section-label">💡 Pistas (click para revelar)</div>
+      ${ex.hints.map((h, i) => `
+        <button class="hint-btn" onclick="toggleHint(this, ${i})">
+          <span>🔒</span> Pista ${i+1}
+        </button>
+        <div class="hint-content" id="hint-${i}">${h}</div>
+      `).join("")}
+
+      <div class="solution-section">
+        <div class="section-label">🔑 Solución</div>
+        <div class="solution-warning">⚠️ Intenta resolver el ejercicio antes de ver la solución</div>
+        <button class="btn btn-danger" onclick="toggleSolution()" style="width:100%;justify-content:center;margin-bottom:10px;">
+          👁 Ver Solución
+        </button>
+        <div class="solution-code" id="solution-code">${ex.solution}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSchema() {
+  const el = document.getElementById("rtab-schema");
+  if (!currentDataset) return;
+  const schema = DATASETS[currentDataset].schema;
+
+  el.innerHTML = `
+    <div class="section-label" style="margin-bottom:14px;">🗃️ Esquema: ${DATASETS[currentDataset].name}</div>
+    ${schema.map(t => `
+      <div class="schema-table-card">
+        <div class="schema-table-name">📋 ${t.table}</div>
+        <div class="schema-columns">
+          ${t.columns.map(c => `
+            <div class="schema-col">
+              <span class="col-name">${c.name}</span>
+              <span class="col-type">${c.type}</span>
+              ${c.key ? `<span class="col-key ${c.key.toLowerCase()}">${c.key}</span>` : ''}
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `).join("")}
+  `;
+}
+
+function renderCheatsheet() {
+  const el = document.getElementById("rtab-cheatsheet");
+  el.innerHTML = `
+    <div class="section-label" style="margin-bottom:14px;">📝 Chuleta SQL</div>
+    ${CHEATSHEET.map(c => `
+      <div class="cheatsheet-item">
+        <div class="cheatsheet-title">${c.title}</div>
+        <div class="cheatsheet-syntax">${c.syntax}</div>
+        <div class="cheatsheet-desc">${c.desc}</div>
+      </div>
+    `).join("")}
+  `;
+}
+
+// ═══════════════════════════════════════
+//  EDITOR
+// ═══════════════════════════════════════
+
+function setupEditor() {
+  const editor = document.getElementById("sql-editor");
+  const lineNums = document.getElementById("line-numbers");
+
+  editor.addEventListener("input", () => updateLineNumbers());
+  editor.addEventListener("scroll", () => { lineNums.scrollTop = editor.scrollTop; });
+  editor.addEventListener("keydown", (e) => {
+    // Tab support
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      editor.value = editor.value.substring(0, start) + "  " + editor.value.substring(end);
+      editor.selectionStart = editor.selectionEnd = start + 2;
+    }
+    // Ctrl+Enter to execute
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      executeQuery();
+    }
+    // Ctrl+Shift+Enter to validate
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+      e.preventDefault();
+      validateQuery();
+    }
+  });
+
+  updateLineNumbers();
+}
+
+function updateLineNumbers() {
+  const editor = document.getElementById("sql-editor");
+  const lineNums = document.getElementById("line-numbers");
+  const lines = editor.value.split("\n").length;
+  lineNums.innerHTML = Array.from({length: Math.max(lines, 1)}, (_, i) => `<span>${i+1}</span>`).join("");
+}
+
+function clearEditor() {
+  document.getElementById("sql-editor").value = "";
+  updateLineNumbers();
+}
+
+// ═══════════════════════════════════════
+//  EXECUTION
+// ═══════════════════════════════════════
+
+function executeQuery() {
+  const sql = document.getElementById("sql-editor").value.trim();
+  if (!sql) {
+    logConsole("⚠️ Escribe una consulta antes de ejecutar", "warn");
+    return;
+  }
+
+  if (!db) {
+    logConsole("⚠️ Selecciona un dataset primero", "warn");
+    return;
+  }
+
+  logConsole(`▶ Ejecutando: ${sql.substring(0, 80)}${sql.length > 80 ? '...' : ''}`, "info");
+
+  const result = runQuery(sql);
+
+  if (!result.success) {
+    showError(result.error);
+    return;
+  }
+
+  if (result.results.length === 0) {
+    showResultsTable([], []);
+    logConsole("✓ Consulta ejecutada. Sin resultados (0 filas).", "success");
+  } else {
+    const r = result.results[0];
+    showResultsTable(r.columns, r.values);
+    logConsole(`✓ Consulta ejecutada. ${r.values.length} fila(s) devuelta(s).`, "success");
+  }
+
+  switchResultTab("results");
+}
+
+function showResultsTable(columns, rows) {
+  const el = document.getElementById("tab-results");
+
+  if (columns.length === 0) {
+    el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);">La consulta no devolvió resultados.</div>`;
+    return;
+  }
+
+  let html = `<table class="result-table"><thead><tr>`;
+  html += columns.map(c => `<th>${c}</th>`).join("");
+  html += `</tr></thead><tbody>`;
+  for (const row of rows) {
+    html += `<tr>`;
+    for (const val of row) {
+      if (val === null) {
+        html += `<td class="null-val">NULL</td>`;
+      } else {
+        html += `<td>${String(val)}</td>`;
+      }
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody></table>`;
+  html += `<div class="result-count">${rows.length} fila(s) • ${columns.length} columna(s)</div>`;
+
+  el.innerHTML = html;
+}
+
+function showError(errorMsg) {
+  logConsole("✗ " + friendlyError(errorMsg), "error");
+  // Also show in validation tab with rich formatting
+  const el = document.getElementById("tab-validation");
+  el.innerHTML = `
+    <div class="validation-badge incorrect">✗ Error de Ejecución</div>
+    ${friendlyErrorHTML(errorMsg)}
+  `;
+  switchResultTab("console");
+}
+
+function friendlyError(msg) {
+  const err = { title: "", detail: "", hint: "", fix: "" };
+
+  // ── Table not found ──
+  if (msg.includes("no such table")) {
+    const match = msg.match(/no such table: (\S+)/);
+    const tbl = match ? match[1] : "?";
+    err.title = `Tabla no encontrada: <code>${tbl}</code>`;
+    err.detail = `La tabla "${tbl}" no existe en el dataset actual.`;
+    err.hint = "Revisa el panel Esquema (pestaña derecha) para ver las tablas disponibles.";
+    // Suggest closest table name
+    if (db && currentDataset) {
+      const tables = DATASETS[currentDataset].schema.map(s => s.table);
+      const close = tables.find(t => t.toLowerCase().includes(tbl.toLowerCase().substring(0,3)));
+      if (close) err.fix = `¿Quisiste decir <code>${close}</code>?`;
+    }
+  }
+  // ── Column not found ──
+  else if (msg.includes("no such column")) {
+    const match = msg.match(/no such column: (\S+)/);
+    const col = match ? match[1] : "?";
+    err.title = `Columna no encontrada: <code>${col}</code>`;
+    err.detail = `La columna "${col}" no existe en las tablas referenciadas.`;
+    err.hint = "Verifica los nombres exactos en el panel Esquema. Recuerda que SQL es sensible a tildes y acentos.";
+    if (col.includes(".")) {
+      err.fix = `Si usas alias de tabla, asegúrate de que el alias esté definido en FROM/JOIN.`;
+    }
+  }
+  // ── Ambiguous column ──
+  else if (msg.includes("ambiguous column")) {
+    const match = msg.match(/ambiguous column name: (\S+)/);
+    const col = match ? match[1] : "?";
+    err.title = `Columna ambigua: <code>${col}</code>`;
+    err.detail = `La columna "${col}" existe en más de una tabla del JOIN.`;
+    err.hint = "Cuando haces JOIN entre tablas que comparten un nombre de columna, debes especificar de qué tabla viene.";
+    err.fix = `Usa <code>tabla.${col}</code> o <code>alias.${col}</code> para desambiguar.`;
+  }
+  // ── Syntax error ──
+  else if (msg.includes("syntax error")) {
+    err.title = "Error de sintaxis SQL";
+    // Try to extract the problematic token
+    const nearMatch = msg.match(/near "([^"]+)"/);
+    const token = nearMatch ? nearMatch[1] : null;
+
+    if (token) {
+      err.detail = `El motor encontró algo inesperado cerca de: <code>${token}</code>`;
+
+      // Specific diagnostics based on token
+      if (token === ",") {
+        err.hint = "Puede haber una coma extra o faltante. Revisa la lista de columnas en tu SELECT.";
+        err.fix = "Cada columna se separa con una coma, pero no pongas coma después de la última columna.";
+      } else if (token === ")") {
+        err.hint = "Hay un paréntesis de cierre sin su correspondiente apertura, o sobra uno.";
+        err.fix = "Cuenta los paréntesis: cada '(' necesita su ')'.";
+      } else if (token === "(") {
+        err.hint = "Hay un paréntesis de apertura inesperado.";
+        err.fix = "Los paréntesis se usan en: funciones COUNT(), subconsultas (SELECT...), y agrupación de condiciones.";
+      } else if (["FROM", "WHERE", "SELECT", "GROUP", "ORDER", "HAVING", "JOIN", "ON", "BY", "AS", "AND", "OR"].includes(token.toUpperCase())) {
+        err.hint = `La palabra clave <code>${token.toUpperCase()}</code> apareció en un lugar inesperado.`;
+        err.fix = "Orden correcto: SELECT → FROM → JOIN → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT";
+      } else if (token === ";") {
+        err.hint = "El punto y coma apareció antes de lo esperado. ¿Tu consulta está incompleta?";
+        err.fix = "Asegúrate de que tu consulta tenga al menos: SELECT columnas FROM tabla";
+      } else {
+        err.hint = `Verifica que <code>${token}</code> esté bien escrito y en el lugar correcto.`;
+        err.fix = "Revisa que no falte una coma, paréntesis, o palabra clave (FROM, WHERE, etc).";
+      }
+    } else {
+      err.detail = "La estructura de tu consulta tiene un problema.";
+      err.hint = "Verifica la estructura básica: SELECT ... FROM ... [WHERE ...] [ORDER BY ...]";
+      err.fix = "Errores comunes: falta FROM, comas entre columnas, comillas sin cerrar, paréntesis desbalanceados.";
+    }
+  }
+  // ── Misuse of aggregate ──
+  else if (msg.includes("misuse of aggregate")) {
+    err.title = "Función agregada mal usada";
+    err.detail = "Usaste COUNT/SUM/AVG/MIN/MAX sin GROUP BY, o mezclaste columnas normales con agregadas.";
+    err.hint = "Si usas una función agregada junto con columnas normales, necesitas GROUP BY.";
+    err.fix = "Ejemplo: SELECT categoria, COUNT(*) FROM productos <code>GROUP BY categoria</code>";
+  }
+  // ── GROUP BY ──
+  else if (msg.includes("not an aggregate") || msg.includes("must appear in the GROUP BY")) {
+    err.title = "Falta columna en GROUP BY";
+    err.detail = "Todas las columnas en SELECT que no están dentro de funciones agregadas deben aparecer en GROUP BY.";
+    err.hint = "Si seleccionas 'nombre' y 'COUNT(*)', entonces 'nombre' debe ir en GROUP BY.";
+    err.fix = "SELECT nombre, COUNT(*) FROM tabla <code>GROUP BY nombre</code>";
+  }
+  // ── UNIQUE constraint ──
+  else if (msg.includes("UNIQUE constraint")) {
+    err.title = "Violación de restricción UNIQUE";
+    err.detail = "Intentaste insertar un valor duplicado en una columna que debe ser única.";
+    err.hint = "Este error ocurre con INSERT/UPDATE. En ejercicios de práctica, solo deberías usar SELECT.";
+    err.fix = "Usa SELECT para consultar datos, no INSERT/UPDATE/DELETE.";
+  }
+  // ── Generic fallback ──
+  else {
+    err.title = "Error en la consulta";
+    err.detail = msg;
+    err.hint = "Revisa tu consulta paso a paso. Compara con el pseudocódigo del ejercicio.";
+    err.fix = "";
+  }
+
+  // Format the friendly error for console (plain text)
+  let plain = `${err.title.replace(/<[^>]+>/g, "")}`;
+  if (err.detail) plain += ` — ${err.detail.replace(/<[^>]+>/g, "")}`;
+  if (err.hint) plain += ` 💡 ${err.hint.replace(/<[^>]+>/g, "")}`;
+
+  return plain;
+}
+
+// Rich HTML error for validation panel
+function friendlyErrorHTML(msg) {
+  const err = { title: "", detail: "", hint: "", fix: "" };
+
+  if (msg.includes("no such table")) {
+    const match = msg.match(/no such table: (\S+)/);
+    const tbl = match ? match[1] : "?";
+    err.title = `Tabla no encontrada: <code>${tbl}</code>`;
+    err.detail = `La tabla "${tbl}" no existe en el dataset actual.`;
+    err.hint = "Revisa el panel Esquema para ver las tablas disponibles.";
+    if (db && currentDataset) {
+      const tables = DATASETS[currentDataset].schema.map(s => s.table);
+      const close = tables.find(t => t.toLowerCase().includes(tbl.toLowerCase().substring(0,3)));
+      if (close) err.fix = `¿Quisiste decir <code>${close}</code>?`;
+    }
+  } else if (msg.includes("no such column")) {
+    const match = msg.match(/no such column: (\S+)/);
+    err.title = `Columna no encontrada: <code>${match?match[1]:"?"}</code>`;
+    err.detail = "Esa columna no existe en las tablas referenciadas.";
+    err.hint = "Verifica nombres exactos en el panel Esquema.";
+  } else if (msg.includes("ambiguous column")) {
+    const match = msg.match(/ambiguous column name: (\S+)/);
+    err.title = `Columna ambigua: <code>${match?match[1]:"?"}</code>`;
+    err.detail = "Esa columna existe en varias tablas del JOIN.";
+    err.hint = `Usa <code>tabla.columna</code> para especificar de cuál tabla viene.`;
+  } else if (msg.includes("syntax error")) {
+    const nearMatch = msg.match(/near "([^"]+)"/);
+    err.title = "Error de sintaxis SQL";
+    err.detail = nearMatch ? `Problema cerca de: <code>${nearMatch[1]}</code>` : "La estructura de tu consulta tiene un problema.";
+    err.hint = "Orden: SELECT → FROM → JOIN → WHERE → GROUP BY → HAVING → ORDER BY → LIMIT";
+    err.fix = "Revisa comas, paréntesis, comillas y palabras clave.";
+  } else if (msg.includes("misuse of aggregate")) {
+    err.title = "Función agregada mal usada";
+    err.detail = "COUNT/SUM/AVG sin GROUP BY o mezclado con columnas normales.";
+    err.hint = "Agrega GROUP BY con las columnas no agregadas.";
+  } else {
+    err.title = "Error en la consulta";
+    err.detail = msg;
+    err.hint = "Revisa paso a paso y compara con el pseudocódigo.";
+  }
+
+  let html = `<div class="error-detail-block"><div class="err-label">⚠️ ${err.title}</div>`;
+  html += `<div style="color:var(--text-secondary)">${err.detail}</div>`;
+  if (err.hint) html += `<div class="err-hint">💡 ${err.hint}</div>`;
+  if (err.fix) html += `<div class="fix-suggestion">✏️ ${err.fix}</div>`;
+  html += `</div>`;
+  return html;
+}
+
+// ═══════════════════════════════════════
+//  VALIDATION
+// ═══════════════════════════════════════
+
+function validateQuery() {
+  const sql = document.getElementById("sql-editor").value.trim();
+  if (!sql || !currentExercise || !db) {
+    logConsole("⚠️ Necesitas un ejercicio seleccionado y una consulta escrita", "warn");
+    return;
+  }
+
+  // Cancel any pending auto-next
+  if (autoNextTimer) { clearTimeout(autoNextTimer); autoNextTimer = null; }
+
+  const ex = currentExercise;
+  const dispIdx = getDisplayIndex(ex);
+
+  // Track attempt
+  if (!progress.attempts[ex.id]) progress.attempts[ex.id] = 0;
+  progress.attempts[ex.id]++;
+  saveProgress();
+
+  // Run user query
+  const userResult = runQuery(sql);
+  if (!userResult.success) {
+    const richHTML = friendlyErrorHTML(userResult.error);
+    showValidation(false, `Tu consulta tiene un error:${richHTML}`);
+    logConsole("✗ " + friendlyError(userResult.error), "error");
+    switchResultTab("validation");
+    return;
+  }
+
+  // Run solution query
+  const solResult = runQuery(ex.solution);
+  if (!solResult.success) {
+    showValidation(false, "Error interno en la solución de referencia.");
+    switchResultTab("validation");
+    return;
+  }
+
+  // Compare results
+  const userCols = userResult.results.length > 0 ? userResult.results[0].columns : [];
+  const userRows = userResult.results.length > 0 ? userResult.results[0].values : [];
+  const solCols = solResult.results.length > 0 ? solResult.results[0].columns : [];
+  const solRows = solResult.results.length > 0 ? solResult.results[0].values : [];
+
+  // Check column count
+  if (userCols.length !== solCols.length) {
+    let detail = `Tu consulta devuelve <strong>${userCols.length} columna(s)</strong> pero se esperan <strong>${solCols.length}</strong>.<br>`;
+    detail += `Columnas esperadas: <strong>${solCols.join(", ")}</strong><br>`;
+    detail += `Tus columnas: <strong>${userCols.join(", ")}</strong>`;
+    showValidation(false, detail, solCols, solRows);
+    switchResultTab("validation");
+    return;
+  }
+
+  // Check row count
+  if (userRows.length !== solRows.length) {
+    let detail = `Tu consulta devuelve <strong>${userRows.length} fila(s)</strong> pero se esperan <strong>${solRows.length}</strong>.<br>`;
+    detail += `Revisa tus condiciones WHERE/HAVING/LIMIT.`;
+    showValidation(false, detail, solCols, solRows);
+    switchResultTab("validation");
+    return;
+  }
+
+  // Check pattern if required
+  if (ex.validate.checkPattern) {
+    const pattern = new RegExp(ex.validate.checkPattern, "i");
+    if (!pattern.test(sql)) {
+      const patternName = ex.validate.checkPattern.replace(/\.\*/g, " ... ").replace(/\\/g, "");
+      showValidation(false, `Tu resultado es correcto, pero el ejercicio requiere que uses <strong>${patternName}</strong> en tu consulta. Intenta reformular usando esa técnica.`);
+      switchResultTab("validation");
+      return;
+    }
+  }
+
+  // Compare data
+  const ignoreOrder = ex.validate.ignoreOrder !== false;
+
+  const normalize = (rows) => rows.map(r => r.map(v => v === null ? "NULL" : String(v)).join("|"));
+
+  let userNorm = normalize(userRows);
+  let solNorm = normalize(solRows);
+
+  if (ignoreOrder) {
+    userNorm.sort();
+    solNorm.sort();
+  }
+
+  const match = JSON.stringify(userNorm) === JSON.stringify(solNorm);
+
+  if (match) {
+    // ═══ SUCCESS ═══
+    const isFirstTime = !progress.completed.includes(ex.id);
+
+    if (isFirstTime) {
+      progress.completed.push(ex.id);
+      saveProgress();
+      renderExerciseList();
+      renderExercisePanel(ex);
+      launchConfetti();
+    }
+
+    updateProgressBar();
+    const attempts = progress.attempts[ex.id] || 1;
+    const nextEx = getNextExercise(ex);
+
+    showValidation(true, `¡Excelente! Tu consulta devuelve el resultado correcto.<br>Lo lograste en <strong>${attempts} intento(s)</strong>.`, null, null, nextEx);
+    logConsole(`✓ Ejercicio ${dispIdx} "${ex.title}" completado!`, "success");
+
+    // Auto-next after 2 seconds (only if there's a next exercise and it was first-time completion)
+    if (nextEx && isFirstTime) {
+      autoNextTimer = setTimeout(() => {
+        goToNextExercise();
+        autoNextTimer = null;
+      }, 2000);
+    }
+
+    // Check if ALL exercises completed
+    if (progress.completed.length === EXERCISES.length) {
+      logConsole("🏆 ¡FELICIDADES! Has completado TODOS los 70 ejercicios del SQL Dojo!", "success");
+      launchConfetti();
+      setTimeout(launchConfetti, 1000);
+    }
+  } else {
+    // ═══ FAILURE ═══
+    let detail = "Los datos no coinciden con el resultado esperado.<br>";
+
+    // Find first differing row
+    for (let i = 0; i < userNorm.length; i++) {
+      if (userNorm[i] !== solNorm[i]) {
+        detail += `Diferencia encontrada en la fila ${i+1}.<br>`;
+        // Show what was expected vs what was received for that row
+        const expectedVals = solRows[i];
+        const userVals = userRows[i];
+        if (expectedVals && userVals) {
+          const diffCols = [];
+          for (let c = 0; c < solCols.length; c++) {
+            if (String(userVals[c]) !== String(expectedVals[c])) {
+              diffCols.push(`<strong>${solCols[c]}</strong>: recibido "${userVals[c]}" → esperado "${expectedVals[c]}"`);
+            }
+          }
+          if (diffCols.length > 0) {
+            detail += `<div class="error-detail-block" style="border-left-color:var(--warning);margin-top:6px;">`;
+            detail += diffCols.join("<br>");
+            detail += `</div>`;
+          }
+        }
+        break;
+      }
+    }
+
+    if (!ignoreOrder) {
+      detail += `<div class="err-hint" style="margin-top:8px;">💡 <strong>Nota:</strong> Este ejercicio requiere un orden específico. Verifica tu ORDER BY.</div>`;
+    }
+
+    showValidation(false, detail, solCols, solRows);
+  }
+
+  switchResultTab("validation");
+}
+
+function showValidation(correct, message, expectedCols, expectedRows, nextExercise) {
+  const el = document.getElementById("tab-validation");
+
+  let html = `
+    <div class="validation-badge ${correct ? 'correct' : 'incorrect'}">
+      ${correct ? '🎉 ¡CORRECTO!' : '✗ Incorrecto'}
+    </div>
+    <div class="validation-detail">${message}</div>
+  `;
+
+  if (correct && nextExercise) {
+    const nextDispIdx = getDisplayIndex(nextExercise);
+    html += `
+      <button class="btn-next" onclick="goToNextExercise()">
+        Siguiente Ejercicio → <span style="opacity:0.7;font-weight:400;">#${nextDispIdx} ${nextExercise.title}</span>
+      </button>
+      <div class="countdown-bar"></div>
+    `;
+  } else if (correct && !nextExercise) {
+    html += `
+      <div style="margin-top:14px;padding:14px;background:var(--accent-dim);border-radius:var(--radius-sm);text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">🏆</div>
+        <strong style="color:var(--accent);">¡Completaste todos los ejercicios!</strong>
+      </div>
+    `;
+  }
+
+  if (!correct && expectedCols && expectedRows) {
+    const showRows = expectedRows.slice(0, 5);
+    html += `
+      <div class="validation-detail" style="margin-top:10px;">
+        <strong>Resultado esperado (primeras ${showRows.length} filas):</strong>
+        <table class="result-table expected-table" style="margin-top:8px;">
+          <thead><tr>${expectedCols.map(c => `<th>${c}</th>`).join("")}</tr></thead>
+          <tbody>${showRows.map(r => `<tr>${r.map(v => `<td>${v === null ? '<span class="null-val">NULL</span>' : v}</td>`).join("")}</tr>`).join("")}</tbody>
+        </table>
+        ${expectedRows.length > 5 ? `<div style="margin-top:6px;color:var(--text-muted);font-size:11px;">... y ${expectedRows.length - 5} fila(s) más</div>` : ''}
+      </div>
+    `;
+  }
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════
+
+function switchResultTab(tab) {
+  document.querySelectorAll(".results-tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".results-content > div").forEach(d => d.style.display = "none");
+
+  const idx = { results: 0, console: 1, validation: 2 }[tab];
+  document.querySelectorAll(".results-tab")[idx].classList.add("active");
+  document.getElementById(`tab-${tab}`).style.display = "";
+}
+
+function switchRightTab(tab) {
+  document.querySelectorAll(".right-tab").forEach(t => t.classList.remove("active"));
+  ["exercise", "schema", "cheatsheet"].forEach(t => {
+    document.getElementById(`rtab-${t}`).style.display = t === tab ? "" : "none";
+  });
+  const idx = { exercise: 0, schema: 1, cheatsheet: 2 }[tab];
+  document.querySelectorAll(".right-tab")[idx].classList.add("active");
+}
+
+// ═══════════════════════════════════════
+//  HINTS & SOLUTION
+// ═══════════════════════════════════════
+
+function toggleHint(btn, index) {
+  const hint = document.getElementById(`hint-${index}`);
+  const isVisible = hint.classList.contains("visible");
+  hint.classList.toggle("visible");
+  btn.classList.toggle("revealed");
+  btn.querySelector("span").textContent = isVisible ? "🔒" : "🔓";
+}
+
+function toggleSolution() {
+  const el = document.getElementById("solution-code");
+  el.classList.toggle("visible");
+}
+
+// ═══════════════════════════════════════
+//  CONSOLE
+// ═══════════════════════════════════════
+
+function logConsole(msg, type = "info") {
+  const el = document.getElementById("tab-console");
+  const line = document.createElement("div");
+  line.className = `console-line ${type}`;
+  const time = new Date().toLocaleTimeString("es-PY", { hour12: false });
+  line.textContent = `[${time}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ═══════════════════════════════════════
+//  PROGRESS
+// ═══════════════════════════════════════
+
+function loadProgress() {
+  try {
+    const saved = localStorage.getItem("sql-dojo-progress");
+    if (saved) {
+      progress = JSON.parse(saved);
+      if (!progress.completed) progress.completed = [];
+      if (!progress.attempts) progress.attempts = {};
+    }
+  } catch(e) {}
+  updateProgressBar();
+}
+
+function saveProgress() {
+  localStorage.setItem("sql-dojo-progress", JSON.stringify(progress));
+  updateProgressBar();
+}
+
+function updateProgressBar() {
+  const total = EXERCISES.length;
+  const done = progress.completed.length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById("progress-text").textContent = `${done} / ${total} completados`;
+  document.getElementById("progress-fill").style.width = pct + "%";
+}
+
+function exportProgress() {
+  const data = JSON.stringify(progress, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "sql-dojo-progreso.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  logConsole("📤 Progreso exportado", "success");
+}
+
+function showImportModal() {
+  document.getElementById("import-modal").classList.add("visible");
+}
+
+function hideImportModal() {
+  document.getElementById("import-modal").classList.remove("visible");
+}
+
+function importProgress() {
+  try {
+    const data = JSON.parse(document.getElementById("import-data").value);
+    if (data.completed) {
+      progress = data;
+      saveProgress();
+      renderExerciseList();
+      if (currentExercise) renderExercisePanel(currentExercise);
+      logConsole("📥 Progreso importado correctamente", "success");
+      hideImportModal();
+    } else {
+      logConsole("⚠️ Formato de progreso inválido", "warn");
+    }
+  } catch(e) {
+    logConsole("⚠️ JSON inválido: " + e.message, "error");
+  }
+}
+
+function resetProgress() {
+  if (confirm("¿Seguro que quieres reiniciar todo tu progreso? Esta acción no se puede deshacer.")) {
+    progress = { completed: [], attempts: {} };
+    saveProgress();
+    renderExerciseList();
+    if (currentExercise) renderExercisePanel(currentExercise);
+    logConsole("🔄 Progreso reiniciado", "warn");
+  }
+}
+
+let autoNextTimer = null;
+
+// ─── DISPLAY INDEX HELPER ───
+// Maps each exercise to its visual position (1-70) as displayed in the sidebar
+function buildDisplayOrder() {
+  const levels = ["beginner", "intermediate", "advanced"];
+  const ordered = [];
+  for (const level of levels) {
+    ordered.push(...EXERCISES.filter(e => e.level === level));
+  }
+  return ordered;
+}
+
+function getDisplayIndex(ex) {
+  const order = buildDisplayOrder();
+  return order.findIndex(e => e.id === ex.id) + 1;
+}
+
+function getNextExercise(currentEx) {
+  const order = buildDisplayOrder();
+  const currentIdx = order.findIndex(e => e.id === currentEx.id);
+  if (currentIdx < order.length - 1) {
+    return order[currentIdx + 1];
+  }
+  return null;
+}
+
+function getFirstIncomplete() {
+  const order = buildDisplayOrder();
+  return order.find(e => !progress.completed.includes(e.id)) || order[0];
+}
+
+function goToNextExercise() {
+  if (autoNextTimer) { clearTimeout(autoNextTimer); autoNextTimer = null; }
+  if (!currentExercise) return;
+  const next = getNextExercise(currentExercise);
+  if (next) {
+    selectExercise(next.id);
+  } else {
+    logConsole("🎉 ¡Has completado todos los ejercicios!", "success");
+  }
+}
+
+// ═══════════════════════════════════════
+//  CONFETTI
+// ═══════════════════════════════════════
+function launchConfetti() {
+  const container = document.createElement("div");
+  container.className = "confetti-container";
+  document.body.appendChild(container);
+
+  const colors = ["#f59e0b", "#10b981", "#3b82f6", "#a78bfa", "#f97316", "#ec4899", "#34d399", "#fbbf24"];
+  const shapes = ["■", "●", "▲", "★", "◆"];
+
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+    piece.style.left = Math.random() * 100 + "vw";
+    piece.style.color = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.fontSize = (8 + Math.random() * 14) + "px";
+    piece.style.animationDuration = (1.5 + Math.random() * 2) + "s";
+    piece.style.animationDelay = Math.random() * 0.8 + "s";
+    container.appendChild(piece);
+  }
+
+  setTimeout(() => container.remove(), 4000);
+}
+
+// ═══════════════════════════════════════
+//  START
+// ═══════════════════════════════════════
+init();
+</script>
+</body>
+</html>
