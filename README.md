@@ -144,31 +144,6 @@ Compatible con todos los navegadores modernos que soporten WebAssembly:
 
 ---
 
-## 🤝 Contribuciones
-
-¡Las contribuciones son bienvenidas! Podés ayudar:
-
-- Agregando nuevos ejercicios en cualquier nivel de dificultad
-- Creando nuevos datasets temáticos
-- Mejorando la interfaz o la accesibilidad
-- Reportando bugs o sugiriendo mejoras
-
-Para contribuir:
-
-```bash
-# Fork del repositorio
-# Creá una rama para tu feature
-git checkout -b feature/nuevo-dataset-ventas
-
-# Hacé tus cambios y comiteá
-git commit -m "feat: agrego dataset de ventas con ejercicios de nivel intermedio"
-
-# Pusheá y abrí un Pull Request
-git push origin feature/nuevo-dataset-ventas
-```
-
----
-
 <div align="center">
   Hecho con ❤️ para aprender SQL en español
 </div>
