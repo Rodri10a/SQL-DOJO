@@ -1050,6 +1050,368 @@ html, body {
   from { width: 100%; }
   to { width: 0%; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — max-width: 768px
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Mobile bottom nav ── */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 900;
+  background: var(--bg-base);
+  border-top: 1px solid var(--border);
+  padding: 0;
+  height: 56px;
+}
+
+.mobile-nav-inner {
+  display: flex;
+  height: 100%;
+}
+
+.mobile-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+
+.mobile-nav-btn .nav-icon { font-size: 18px; line-height: 1; }
+.mobile-nav-btn.active { color: var(--accent); }
+.mobile-nav-btn.active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 25%; right: 25%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 0 0 2px 2px;
+}
+
+/* ── Mobile drawer overlay ── */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 800;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.mobile-overlay.visible {
+  display: block;
+  opacity: 1;
+}
+
+/* ── Mobile exercise header bar (shows current exercise in compact mode) ── */
+.mobile-exercise-bar {
+  display: none;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  align-items: center;
+  gap: 8px;
+}
+.mobile-exercise-bar .meb-num {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.mobile-exercise-bar .meb-title {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mobile-exercise-bar .meb-arrow {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .hide-mobile { display: none !important; }
+
+  html, body {
+    overflow: hidden;
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ── Topbar compacts ── */
+  .topbar {
+    height: 46px;
+    padding: 0 12px;
+  }
+  .topbar-logo {
+    font-size: 15px;
+    gap: 8px;
+  }
+  .topbar-logo .icon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    border-radius: 6px;
+  }
+  .topbar-progress {
+    font-size: 11px;
+    gap: 6px;
+  }
+  .progress-bar-mini {
+    width: 60px;
+    height: 4px;
+  }
+  .topbar-actions .btn {
+    padding: 5px 8px;
+    font-size: 14px;
+    border: none;
+    background: none;
+  }
+  /* Hide text labels in topbar buttons, keep only emoji */
+  .topbar-actions .btn {
+    gap: 0;
+  }
+
+  /* ── App fills screen minus bottom nav ── */
+  .app {
+    height: calc(100vh);
+    height: calc(100dvh);
+    padding-bottom: 56px;
+  }
+
+  /* ── Main area: single column ── */
+  .main-area {
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* ── Left sidebar: mobile drawer from left ── */
+  .sidebar {
+    position: fixed;
+    top: 46px;
+    left: 0;
+    bottom: 56px;
+    width: 85vw;
+    max-width: 320px;
+    z-index: 850;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+    border-right: 1px solid var(--border);
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* ── Right sidebar: mobile drawer from right ── */
+  .right-sidebar {
+    position: fixed;
+    top: 46px;
+    right: 0;
+    bottom: 56px;
+    width: 92vw;
+    max-width: 380px;
+    z-index: 850;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px 0 20px rgba(0,0,0,0.4);
+    border-left: 1px solid var(--border);
+  }
+  .right-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* ── Center: takes full width ── */
+  .center {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Mobile exercise bar visible ── */
+  .mobile-exercise-bar {
+    display: flex;
+  }
+
+  /* ── Editor area: adjustable ── */
+  .editor-area {
+    flex: 1;
+    min-height: 0;
+  }
+  .editor-toolbar {
+    padding: 6px 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .editor-toolbar-left {
+    display: none; /* hide the "consulta.sql" tab on mobile */
+  }
+  .editor-toolbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .editor-toolbar-right .btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  #sql-editor {
+    font-size: 14px; /* bigger for mobile readability */
+    padding: 10px 10px 10px 44px;
+    /* Prevents zoom on iOS when focusing textarea */
+  }
+  .line-numbers {
+    width: 36px;
+    font-size: 11px;
+    padding: 10px 0;
+  }
+  .line-numbers span {
+    padding-right: 8px;
+  }
+
+  /* ── Results panel: collapsible ── */
+  .results-panel {
+    height: 180px;
+    flex-shrink: 0;
+  }
+  .results-panel.mobile-expanded {
+    position: fixed;
+    top: 46px;
+    left: 0; right: 0;
+    bottom: 56px;
+    height: auto;
+    z-index: 840;
+  }
+  .results-tabs {
+    flex-wrap: nowrap;
+  }
+  .results-tab {
+    padding: 7px 10px;
+    font-size: 11px;
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* ── Mobile nav visible ── */
+  .mobile-nav {
+    display: block;
+  }
+
+  /* ── Right sidebar content: more padding, bigger text ── */
+  .right-content {
+    padding: 14px;
+  }
+  .exercise-title-main {
+    font-size: 16px;
+  }
+  .exercise-statement {
+    font-size: 13px;
+    padding: 12px 14px;
+  }
+
+  /* ── Schema and cheatsheet cards ── */
+  .schema-table-card { margin-bottom: 10px; }
+  .cheatsheet-item { margin-bottom: 12px; }
+  .cheatsheet-syntax { font-size: 11px; padding: 8px 12px; }
+
+  /* ── Modal: full width ── */
+  .modal {
+    width: 95%;
+    max-width: none;
+    padding: 20px;
+  }
+  .modal textarea {
+    height: 150px;
+    font-size: 13px;
+  }
+
+  /* ── Confetti: reduce count visually ── */
+  .confetti-container { pointer-events: none; }
+
+  /* ── Welcome screen: compact ── */
+  .welcome-screen {
+    padding: 20px;
+  }
+  .welcome-icon {
+    width: 60px; height: 60px;
+    font-size: 28px;
+    border-radius: 14px;
+    margin-bottom: 16px;
+  }
+  .welcome-title { font-size: 20px; }
+  .welcome-sub { font-size: 13px; }
+
+  /* ── Validation/error blocks: responsive ── */
+  .error-detail-block {
+    font-size: 11px;
+    padding: 10px 12px;
+  }
+  .btn-next {
+    font-size: 12px;
+    padding: 10px 16px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* ── Dataset selector: scroll horizontal ── */
+  .dataset-selector {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .dataset-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Exercise list items: bigger touch targets ── */
+  .exercise-item {
+    padding: 12px 12px;
+    margin-bottom: 1px;
+  }
+  .exercise-item .ex-title {
+    font-size: 13px;
+  }
+
+  /* ── Hint buttons: bigger touch target ── */
+  .hint-btn {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+}
+
+/* ── Extra small screens (< 400px) ── */
+@media (max-width: 400px) {
+  .topbar-logo span { display: none; }
+  .topbar-progress span { font-size: 10px; }
+  .progress-bar-mini { width: 50px; }
+  .topbar-actions .btn { padding: 5px 6px; }
+  .editor-toolbar-right .btn { font-size: 11px; }
+  .results-tab { font-size: 10px; padding: 6px 6px; }
+}
 </style>
 </head>
 <body>
@@ -1075,9 +1437,9 @@ html, body {
       </div>
     </div>
     <div class="topbar-actions">
-      <button class="btn btn-ghost" onclick="exportProgress()" title="Exportar progreso">📤 Exportar</button>
-      <button class="btn btn-ghost" onclick="showImportModal()" title="Importar progreso">📥 Importar</button>
-      <button class="btn btn-ghost" onclick="resetProgress()" title="Reiniciar progreso">🔄 Reset</button>
+      <button class="btn btn-ghost" onclick="exportProgress()" title="Exportar progreso">📤<span class="hide-mobile"> Exportar</span></button>
+      <button class="btn btn-ghost" onclick="showImportModal()" title="Importar progreso">📥<span class="hide-mobile"> Importar</span></button>
+      <button class="btn btn-ghost" onclick="resetProgress()" title="Reiniciar progreso">🔄<span class="hide-mobile"> Reset</span></button>
     </div>
   </div>
 
@@ -1096,6 +1458,12 @@ html, body {
 
     <!-- CENTER -->
     <div class="center">
+      <!-- Mobile: compact exercise indicator -->
+      <div class="mobile-exercise-bar" id="mobile-exercise-bar" onclick="mobileShowPanel('exercise')">
+        <span class="meb-num" id="meb-num">—</span>
+        <span class="meb-title" id="meb-title">Selecciona un ejercicio</span>
+        <span class="meb-arrow">▸</span>
+      </div>
       <div class="editor-area">
         <div class="editor-toolbar">
           <div class="editor-toolbar-left">
@@ -1160,6 +1528,31 @@ html, body {
 
 <!-- IMPORT MODAL -->
 <div class="modal-overlay" id="import-modal">
+
+<!-- MOBILE OVERLAY (closes drawers on tap) -->
+<div class="mobile-overlay" id="mobile-overlay" onclick="closeMobileDrawers()"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="mobile-nav" id="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-btn" onclick="mobileShowPanel('exercises')" id="mnav-exercises">
+      <span class="nav-icon">📝</span>
+      <span>Ejercicios</span>
+    </button>
+    <button class="mobile-nav-btn active" onclick="mobileShowPanel('editor')" id="mnav-editor">
+      <span class="nav-icon">⌨️</span>
+      <span>Editor</span>
+    </button>
+    <button class="mobile-nav-btn" onclick="mobileShowPanel('exercise')" id="mnav-exercise">
+      <span class="nav-icon">📖</span>
+      <span>Ejercicio</span>
+    </button>
+    <button class="mobile-nav-btn" onclick="mobileShowPanel('results-expand')" id="mnav-results">
+      <span class="nav-icon">📊</span>
+      <span>Resultados</span>
+    </button>
+  </div>
+</div>
   <div class="modal">
     <div class="modal-title">📥 Importar Progreso</div>
     <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">Pega el JSON de progreso exportado previamente:</p>
@@ -3240,6 +3633,12 @@ function selectExercise(id) {
   // Reset results panel
   document.getElementById("tab-results").innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-muted);">Ejecuta una consulta para ver resultados aquí</div>`;
   document.getElementById("tab-validation").innerHTML = `<div style="padding:14px;color:var(--text-muted);">Presiona "Validar" para verificar tu respuesta</div>`;
+
+  // Mobile: close drawers and update exercise bar
+  updateMobileExerciseBar(ex);
+  if (isMobile()) {
+    closeMobileDrawers();
+  }
 }
 
 function renderExercisePanel(ex) {
@@ -3358,6 +3757,16 @@ function setupEditor() {
       e.preventDefault();
       validateQuery();
     }
+  });
+
+  // Escape closes mobile drawers
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isMobile()) closeMobileDrawers();
+  });
+
+  // Handle back button / popstate for mobile drawers
+  window.addEventListener("resize", () => {
+    if (!isMobile()) closeMobileDrawers();
   });
 
   updateLineNumbers();
@@ -4013,6 +4422,79 @@ function launchConfetti() {
   }
 
   setTimeout(() => container.remove(), 4000);
+}
+
+// ═══════════════════════════════════════
+//  MOBILE NAVIGATION
+// ═══════════════════════════════════════
+
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+
+function closeMobileDrawers() {
+  document.querySelector('.sidebar').classList.remove('mobile-open');
+  document.querySelector('.right-sidebar').classList.remove('mobile-open');
+  document.querySelector('.results-panel').classList.remove('mobile-expanded');
+  document.getElementById('mobile-overlay').classList.remove('visible');
+  // Update nav state
+  setMobileNavActive('editor');
+}
+
+function setMobileNavActive(panel) {
+  document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+  const map = {
+    exercises: 'mnav-exercises',
+    editor: 'mnav-editor',
+    exercise: 'mnav-exercise',
+    'results-expand': 'mnav-results'
+  };
+  const btn = document.getElementById(map[panel]);
+  if (btn) btn.classList.add('active');
+}
+
+function mobileShowPanel(panel) {
+  if (!isMobile()) return;
+
+  const sidebar = document.querySelector('.sidebar');
+  const rightbar = document.querySelector('.right-sidebar');
+  const overlay = document.getElementById('mobile-overlay');
+  const results = document.querySelector('.results-panel');
+
+  // Close everything first
+  sidebar.classList.remove('mobile-open');
+  rightbar.classList.remove('mobile-open');
+  results.classList.remove('mobile-expanded');
+  overlay.classList.remove('visible');
+
+  setMobileNavActive(panel);
+
+  switch (panel) {
+    case 'exercises':
+      sidebar.classList.add('mobile-open');
+      overlay.classList.add('visible');
+      break;
+    case 'exercise':
+      rightbar.classList.add('mobile-open');
+      overlay.classList.add('visible');
+      switchRightTab('exercise');
+      break;
+    case 'results-expand':
+      results.classList.add('mobile-expanded');
+      overlay.classList.add('visible');
+      break;
+    case 'editor':
+      // Just close everything, editor is always visible
+      document.getElementById('sql-editor').focus();
+      break;
+  }
+}
+
+function updateMobileExerciseBar(ex) {
+  if (!ex) return;
+  const dispIdx = getDisplayIndex(ex);
+  document.getElementById('meb-num').textContent = `#${dispIdx}`;
+  document.getElementById('meb-title').textContent = ex.title;
 }
 
 // ═══════════════════════════════════════
