@@ -169,12 +169,6 @@ git push origin feature/nuevo-dataset-ventas
 
 ---
 
-## 📄 Licencia
-
-Este proyecto está bajo la licencia [MIT](LICENSE).
-
----
-
 <div align="center">
   Hecho con ❤️ para aprender SQL en español
 </div>
